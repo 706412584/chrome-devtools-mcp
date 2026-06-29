@@ -2,18 +2,22 @@
 
 # Chrome DevTools MCP Tool Reference
 
-- **[Input automation](#input-automation)** (10 tools)
+- **[Input automation](#input-automation)** (12 tools)
   - [`click`](#click)
   - [`drag`](#drag)
   - [`fill`](#fill)
   - [`fill_form`](#fill_form)
   - [`handle_dialog`](#handle_dialog)
   - [`hover`](#hover)
+  - [`keyboard_sequence`](#keyboard_sequence)
+  - [`mouse_move`](#mouse_move)
   - [`press_key`](#press_key)
   - [`type_text`](#type_text)
   - [`upload_file`](#upload_file)
   - [`click_at`](#click_at)
-- **[Navigation automation](#navigation-automation)** (6 tools)
+- **[Navigation automation](#navigation-automation)** (8 tools)
+  - [`browser_connect`](#browser_connect)
+  - [`browser_discover`](#browser_discover)
   - [`close_page`](#close_page)
   - [`list_pages`](#list_pages)
   - [`navigate_page`](#navigate_page)
@@ -23,18 +27,33 @@
 - **[Emulation](#emulation)** (2 tools)
   - [`emulate`](#emulate)
   - [`resize_page`](#resize_page)
-- **[Performance](#performance)** (3 tools)
+- **[Performance](#performance)** (5 tools)
+  - [`game_stats`](#game_stats)
+  - [`inject_game_overlay`](#inject_game_overlay)
   - [`performance_analyze_insight`](#performance_analyze_insight)
   - [`performance_start_trace`](#performance_start_trace)
   - [`performance_stop_trace`](#performance_stop_trace)
-- **[Network](#network)** (2 tools)
+- **[Network](#network)** (7 tools)
+  - [`asset_monitor_get`](#asset_monitor_get)
+  - [`asset_monitor_start`](#asset_monitor_start)
   - [`get_network_request`](#get_network_request)
   - [`list_network_requests`](#list_network_requests)
-- **[Debugging](#debugging)** (8 tools)
+  - [`websocket_monitor_get`](#websocket_monitor_get)
+  - [`websocket_monitor_start`](#websocket_monitor_start)
+  - [`websocket_monitor_stop`](#websocket_monitor_stop)
+- **[Debugging](#debugging)** (16 tools)
+  - [`canvas_info`](#canvas_info)
+  - [`console_intercept_start`](#console_intercept_start)
+  - [`console_intercept_stop`](#console_intercept_stop)
+  - [`console_search`](#console_search)
+  - [`console_stats`](#console_stats)
   - [`evaluate_script`](#evaluate_script)
+  - [`game_state`](#game_state)
+  - [`game_test`](#game_test)
   - [`get_console_message`](#get_console_message)
   - [`lighthouse_audit`](#lighthouse_audit)
   - [`list_console_messages`](#list_console_messages)
+  - [`screenshot_diff`](#screenshot_diff)
   - [`take_screenshot`](#take_screenshot)
   - [`take_snapshot`](#take_snapshot)
   - [`screencast_start`](#screencast_start)
@@ -133,6 +152,30 @@
 
 ---
 
+### `keyboard_sequence`
+
+**Description:** Press a sequence of keys or key combinations. Each entry can be a single key or a combo like "Control+S". Useful for testing keyboard shortcuts and multi-key game controls.
+
+**Parameters:**
+
+- **keys** (array) **(required)**: Array of keys or key combos to press in order, e.g. ["Tab", "Tab", "Enter"] or ["Control+S", "Control+Z"]
+- **delayMs** (number) _(optional)_: Delay between each key press in milliseconds. Default is 0.
+- **includeSnapshot** (boolean) _(optional)_: Whether to include a snapshot in the response. Default is false.
+
+---
+
+### `mouse_move`
+
+**Description:** Move the mouse cursor without clicking. Useful for triggering [`hover`](#hover) states.
+
+**Parameters:**
+
+- **x** (number) **(required)**: The x coordinate
+- **y** (number) **(required)**: The y coordinate
+- **includeSnapshot** (boolean) _(optional)_: Whether to include a snapshot in the response. Default is false.
+
+---
+
 ### `press_key`
 
 **Description:** Press a key or key combination. Use this when other input methods like [`fill`](#fill)() cannot be used (e.g., keyboard shortcuts, navigation keys, or special key combinations).
@@ -181,6 +224,26 @@
 ---
 
 ## Navigation automation
+
+### `browser_connect`
+
+**Description:** Generate the plugin configuration to connect to a specific Chrome instance. Takes a userDataDir path or wsEndpoint and outputs the plugin.json args needed. Use [`browser_discover`](#browser_discover) first to find available instances.
+
+**Parameters:**
+
+- **profile** (string) _(optional)_: Chrome profile name within the userDataDir (e.g., "Default", "Profile 1").
+- **userDataDir** (string) _(optional)_: Path to Chrome user data directory to connect to.
+- **wsEndpoint** (string) _(optional)_: WebSocket endpoint to connect to (e.g., ws://127.0.0.1:9222/devtools/browser/xxx).
+
+---
+
+### `browser_discover`
+
+**Description:** Discover available Chrome/Edge browser instances and profiles. Finds: (1) Running Chrome instances with debug ports, (2) MCP persistent profiles with saved sessions, system Chrome profiles. Use the returned --userDataDir or --wsEndpoint to reconnect.
+
+**Parameters:** None
+
+---
 
 ### `close_page`
 
@@ -281,6 +344,27 @@
 
 ## Performance
 
+### `game_stats`
+
+**Description:** Measure real-time game performance: FPS, frame time percentiles (avg/min/max/p50/p95/p99), and JS memory usage. Collects data via requestAnimationFrame sampling for the specified duration. Returns JSON with performance metrics.
+
+**Parameters:**
+
+- **durationMs** (integer) _(optional)_: Duration in milliseconds to collect frame samples. Default 1000ms. Range 100-5000.
+- **maxSamples** (integer) _(optional)_: Maximum number of frame samples to collect. Default 120.
+
+---
+
+### `inject_game_overlay`
+
+**Description:** Inject or remove a real-time FPS/frame-time/memory overlay on the page. The overlay is a semi-transparent HUD in the top-right corner showing live performance metrics.
+
+**Parameters:**
+
+- **action** (enum: "start", "stop") **(required)**: "start" to inject the overlay, "stop" to remove it.
+
+---
+
 ### `performance_analyze_insight`
 
 **Description:** Provides more detailed information on a specific Performance Insight of an insight set that was highlighted in the results of a trace recording.
@@ -316,6 +400,26 @@
 
 ## Network
 
+### `asset_monitor_get`
+
+**Description:** Query captured asset loading data. Returns summary by file extension (count, size, duration, failures) and recent entries.
+
+**Parameters:**
+
+- **filter** (string) _(optional)_: Filter by URL substring (case-insensitive).
+- **maxResults** (integer) _(optional)_: Maximum recent entries to return. Default 30.
+- **sinceMs** (integer) _(optional)_: Only return entries from the last N milliseconds.
+
+---
+
+### `asset_monitor_start`
+
+**Description:** Install an asset loading interceptor that tracks fetch, XHR, and PerformanceObserver resource timing. Use [`asset_monitor_get`](#asset_monitor_get) to query captured data. Covers textures, audio, scripts, 3D models, fonts, WASM.
+
+**Parameters:** None
+
+---
+
 ### `get_network_request`
 
 **Description:** Gets a network request by an optional reqid, if omitted returns the currently selected request in the DevTools Network panel.
@@ -341,7 +445,79 @@
 
 ---
 
+### `websocket_monitor_get`
+
+**Description:** Get captured WebSocket events. Returns lifecycle events (created, handshake, closed) and message frames.
+
+**Parameters:**
+
+- **maxEvents** (integer) _(optional)_: Maximum number of events to return. Default 50.
+- **types** (array) _(optional)_: Filter by event types. When omitted, returns all events.
+
+---
+
+### `websocket_monitor_start`
+
+**Description:** Start monitoring WebSocket activity on the page via CDP Network domain. Captures: connection creation, handshake, frames sent/received, and closures. Call [`websocket_monitor_stop`](#websocket_monitor_stop) to detach. Events are stored in memory and can be queried with [`websocket_monitor_get`](#websocket_monitor_get).
+
+**Parameters:** None
+
+---
+
+### `websocket_monitor_stop`
+
+**Description:** Stop WebSocket monitoring and detach CDP Network listeners.
+
+**Parameters:** None
+
+---
+
 ## Debugging
+
+### `canvas_info`
+
+**Description:** Get information about all canvas elements on the page: dimensions, DPR, WebGL context details, GPU renderer. Useful for debugging game rendering across different devices.
+
+**Parameters:** None
+
+---
+
+### `console_intercept_start`
+
+**Description:** Install a console interceptor that captures all console.log/info/warn/error/debug calls into a buffer. Use [`console_search`](#console_search) to query captured messages. Messages persist until page navigation or [`console_intercept_stop`](#console_intercept_stop).
+
+**Parameters:** None
+
+---
+
+### `console_intercept_stop`
+
+**Description:** Clear the console capture buffer. Does not uninstall the interceptor (messages will continue to be captured).
+
+**Parameters:** None
+
+---
+
+### `console_search`
+
+**Description:** Search captured console messages by text content and/or type. Requires [`console_intercept_start`](#console_intercept_start) to be called first to install the interceptor. Returns matching messages with timestamps.
+
+**Parameters:**
+
+- **maxResults** (integer) _(optional)_: Maximum number of messages to return. Default 50.
+- **query** (string) _(optional)_: Text to search for (case-insensitive substring match).
+- **sinceMs** (integer) _(optional)_: Only return messages from the last N milliseconds. Default: all messages.
+- **types** (string) _(optional)_: Comma-separated list of message types to filter: log,info,warn,error,debug,dir,table,trace. Default: all types.
+
+---
+
+### `console_stats`
+
+**Description:** Show statistics about captured console messages: total count, breakdown by type, time range.
+
+**Parameters:** None
+
+---
 
 ### `evaluate_script`
 
@@ -363,6 +539,29 @@ so returned values have to be JSON-serializable.
 - **args** (array) _(optional)_: An optional list of arguments to pass to the function.
 - **dialogAction** (string) _(optional)_: Handle dialogs while execution. "accept", "dismiss", or string for response of window.prompt. Defaults to accept.
 - **filePath** (string) _(optional)_: The absolute or relative path to a file to save the script output to. If omitted, the output is returned inline.
+
+---
+
+### `game_state`
+
+**Description:** Inspect game internal state. Supports presets: "screen" (current page/screen), "dom" (DOM element counts), "console" (game framework globals), "performance" (resource stats). Or provide a custom JavaScript function to read any game variable.
+
+**Parameters:**
+
+- **function** (string) _(optional)_: Custom JavaScript function to evaluate. Must return a JSON-serializable value. Example: "() => window.\_\_gameState"
+- **preset** (enum: "screen", "dom", "console", "performance") _(optional)_: Built-in query preset. If provided, "function" is ignored.
+- **pretty** (boolean) _(optional)_: Pretty-print the JSON output. Default true.
+
+---
+
+### `game_test`
+
+**Description:** Run an automated game test with multiple steps. Supports: navigate, wait, [`wait_for`](#wait_for), wait_for_canvas, [`click`](#click), screenshot (with baseline comparison), eval (run JS), assert_text, assert_no_errors. Steps execute sequentially. Screenshots can compare against baselines with pixel tolerance for animated content.
+
+**Parameters:**
+
+- **steps** (string) **(required)**: JSON array of test steps. Each step: {action, url?, name?, text?, function?, present?, x?, y?, timeMs?, timeout?, format?, quality?, baseline?, tolerance?, threshold?}. Actions: navigate, wait, [`wait_for`](#wait_for), wait_for_canvas, [`click`](#click), screenshot, eval, assert_text, assert_no_errors.
+- **baselineDir** (string) _(optional)_: Directory to store baseline screenshots for comparison. Defaults to ./test-baselines/
 
 ---
 
@@ -402,6 +601,20 @@ so returned values have to be JSON-serializable.
 
 ---
 
+### `screenshot_diff`
+
+**Description:** Compare the current viewport screenshot against a baseline image file. Returns pixel-level diff statistics including diff percentage, max color distance, and bounding boxes of changed regions. Optionally saves a diff visualization image. Useful for automated game UI regression testing and animation frame comparison.
+
+**Parameters:**
+
+- **baselinePath** (string) **(required)**: Path to the baseline (reference) image file to compare against.
+- **alphaTolerance** (number) _(optional)_: Alpha channel tolerance (0-255). Useful when compositing causes alpha differences. Default 50.
+- **maxRegions** (integer) _(optional)_: Maximum number of diff regions to report. Default 5.
+- **saveDiffTo** (string) _(optional)_: Path to save the diff visualization image (PNG). Red pixels show differences, gray pixels show matches.
+- **tolerance** (number) _(optional)_: Per-pixel color distance tolerance (Euclidean in RGB space, 0-765). 0 = exact match, 30 = slight anti-aliasing allowed, 100 = aggressive tolerance for animations. Default 30.
+
+---
+
 ### `take_screenshot`
 
 **Description:** Take a screenshot of the page or element.
@@ -409,9 +622,11 @@ so returned values have to be JSON-serializable.
 **Parameters:**
 
 - **filePath** (string) _(optional)_: The absolute path, or a path relative to the current working directory, to save the screenshot to instead of attaching it to the response.
-- **format** (enum: "png", "jpeg", "webp") _(optional)_: Type of format to save the screenshot as. Default is "png"
+- **format** (enum: "png", "jpeg", "webp") _(optional)_: Type of format to save the screenshot as. Default is "png". Use "jpeg" or "webp" with quality for smaller files.
 - **fullPage** (boolean) _(optional)_: If set to true takes a screenshot of the full page instead of the currently visible viewport. Incompatible with uid.
-- **quality** (number) _(optional)_: Compression quality for JPEG and WebP formats (0-100). Higher values mean better quality but larger file sizes. Ignored for PNG format.
+- **maxHeight** (integer) _(optional)_: Maximum height in pixels. The screenshot will be downscaled to fit within this height while preserving aspect ratio.
+- **maxWidth** (integer) _(optional)_: Maximum width in pixels. The screenshot will be downscaled to fit within this width while preserving aspect ratio. Useful for reducing file size.
+- **quality** (number) _(optional)_: Compression quality for JPEG and WebP formats (0-100). Higher values mean better quality but larger file sizes. Ignored for PNG format. Recommended: 80 for JPEG, 85 for WebP.
 - **uid** (string) _(optional)_: The uid of an element on the page from the page content snapshot. If omitted, takes a page screenshot.
 
 ---

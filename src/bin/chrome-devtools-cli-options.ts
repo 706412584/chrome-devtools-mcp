@@ -23,6 +23,77 @@ export type Commands = Record<
   }
 >;
 export const commands: Commands = {
+  asset_monitor_get: {
+    description:
+      'Query captured asset loading data. Returns summary by file extension (count, size, duration, failures) and recent entries.',
+    category: 'Network',
+    args: {
+      filter: {
+        name: 'filter',
+        type: 'string',
+        description: 'Filter by URL substring (case-insensitive).',
+        required: false,
+      },
+      sinceMs: {
+        name: 'sinceMs',
+        type: 'integer',
+        description: 'Only return entries from the last N milliseconds.',
+        required: false,
+      },
+      maxResults: {
+        name: 'maxResults',
+        type: 'integer',
+        description: 'Maximum recent entries to return. Default 30.',
+        required: false,
+        default: 30,
+      },
+    },
+  },
+  asset_monitor_start: {
+    description:
+      'Install an asset loading interceptor that tracks fetch, XHR, and PerformanceObserver resource timing. Use asset_monitor_get to query captured data. Covers textures, audio, scripts, 3D models, fonts, WASM.',
+    category: 'Network',
+    args: {},
+  },
+  browser_connect: {
+    description:
+      'Generate the plugin configuration to connect to a specific Chrome instance. Takes a userDataDir path or wsEndpoint and outputs the plugin.json args needed. Use browser_discover first to find available instances.',
+    category: 'Navigation automation',
+    args: {
+      userDataDir: {
+        name: 'userDataDir',
+        type: 'string',
+        description: 'Path to Chrome user data directory to connect to.',
+        required: false,
+      },
+      wsEndpoint: {
+        name: 'wsEndpoint',
+        type: 'string',
+        description:
+          'WebSocket endpoint to connect to (e.g., ws://127.0.0.1:9222/devtools/browser/xxx).',
+        required: false,
+      },
+      profile: {
+        name: 'profile',
+        type: 'string',
+        description:
+          'Chrome profile name within the userDataDir (e.g., "Default", "Profile 1").',
+        required: false,
+      },
+    },
+  },
+  browser_discover: {
+    description:
+      'Discover available Chrome/Edge browser instances and profiles. Finds: (1) Running Chrome instances with debug ports, (2) MCP persistent profiles with saved sessions, system Chrome profiles. Use the returned --userDataDir or --wsEndpoint to reconnect.',
+    category: 'Navigation automation',
+    args: {},
+  },
+  canvas_info: {
+    description:
+      'Get information about all canvas elements on the page: dimensions, DPR, WebGL context details, GPU renderer. Useful for debugging game rendering across different devices.',
+    category: 'Debugging',
+    args: {},
+  },
   click: {
     description: 'Clicks on the provided element',
     category: 'Input automation',
@@ -107,6 +178,58 @@ export const commands: Commands = {
         required: true,
       },
     },
+  },
+  console_intercept_start: {
+    description:
+      'Install a console interceptor that captures all console.log/info/warn/error/debug calls into a buffer. Use console_search to query captured messages. Messages persist until page navigation or console_intercept_stop.',
+    category: 'Debugging',
+    args: {},
+  },
+  console_intercept_stop: {
+    description:
+      'Clear the console capture buffer. Does not uninstall the interceptor (messages will continue to be captured).',
+    category: 'Debugging',
+    args: {},
+  },
+  console_search: {
+    description:
+      'Search captured console messages by text content and/or type. Requires console_intercept_start to be called first to install the interceptor. Returns matching messages with timestamps.',
+    category: 'Debugging',
+    args: {
+      query: {
+        name: 'query',
+        type: 'string',
+        description: 'Text to search for (case-insensitive substring match).',
+        required: false,
+      },
+      types: {
+        name: 'types',
+        type: 'string',
+        description:
+          'Comma-separated list of message types to filter: log,info,warn,error,debug,dir,table,trace. Default: all types.',
+        required: false,
+      },
+      sinceMs: {
+        name: 'sinceMs',
+        type: 'integer',
+        description:
+          'Only return messages from the last N milliseconds. Default: all messages.',
+        required: false,
+      },
+      maxResults: {
+        name: 'maxResults',
+        type: 'integer',
+        description: 'Maximum number of messages to return. Default 50.',
+        required: false,
+        default: 50,
+      },
+    },
+  },
+  console_stats: {
+    description:
+      'Show statistics about captured console messages: total count, breakdown by type, time range.',
+    category: 'Debugging',
+    args: {},
   },
   drag: {
     description: 'Drag an element onto another element',
@@ -286,6 +409,78 @@ export const commands: Commands = {
         type: 'boolean',
         description:
           'Whether to include a snapshot in the response. Default is false.',
+        required: false,
+      },
+    },
+  },
+  game_state: {
+    description:
+      'Inspect game internal state. Supports presets: "screen" (current page/screen), "dom" (DOM element counts), "console" (game framework globals), "performance" (resource stats). Or provide a custom JavaScript function to read any game variable.',
+    category: 'Debugging',
+    args: {
+      preset: {
+        name: 'preset',
+        type: 'string',
+        description:
+          'Built-in query preset. If provided, "function" is ignored.',
+        required: false,
+        enum: ['screen', 'dom', 'console', 'performance'],
+      },
+      function: {
+        name: 'function',
+        type: 'string',
+        description:
+          'Custom JavaScript function to evaluate. Must return a JSON-serializable value. Example: "() => window.__gameState"',
+        required: false,
+      },
+      pretty: {
+        name: 'pretty',
+        type: 'boolean',
+        description: 'Pretty-print the JSON output. Default true.',
+        required: false,
+        default: true,
+      },
+    },
+  },
+  game_stats: {
+    description:
+      'Measure real-time game performance: FPS, frame time percentiles (avg/min/max/p50/p95/p99), and JS memory usage. Collects data via requestAnimationFrame sampling for the specified duration. Returns JSON with performance metrics.',
+    category: 'Performance',
+    args: {
+      durationMs: {
+        name: 'durationMs',
+        type: 'integer',
+        description:
+          'Duration in milliseconds to collect frame samples. Default 1000ms. Range 100-5000.',
+        required: false,
+        default: 1000,
+      },
+      maxSamples: {
+        name: 'maxSamples',
+        type: 'integer',
+        description: 'Maximum number of frame samples to collect. Default 120.',
+        required: false,
+        default: 120,
+      },
+    },
+  },
+  game_test: {
+    description:
+      'Run an automated game test with multiple steps. Supports: navigate, wait, wait_for, wait_for_canvas, click, screenshot (with baseline comparison), eval (run JS), assert_text, assert_no_errors. Steps execute sequentially. Screenshots can compare against baselines with pixel tolerance for animated content.',
+    category: 'Debugging',
+    args: {
+      steps: {
+        name: 'steps',
+        type: 'string',
+        description:
+          'JSON array of test steps. Each step: {action, url?, name?, text?, function?, present?, x?, y?, timeMs?, timeout?, format?, quality?, baseline?, tolerance?, threshold?}. Actions: navigate, wait, wait_for, wait_for_canvas, click, screenshot, eval, assert_text, assert_no_errors.',
+        required: true,
+      },
+      baselineDir: {
+        name: 'baselineDir',
+        type: 'string',
+        description:
+          'Directory to store baseline screenshots for comparison. Defaults to ./test-baselines/',
         required: false,
       },
     },
@@ -559,6 +754,20 @@ export const commands: Commands = {
       },
     },
   },
+  inject_game_overlay: {
+    description:
+      'Inject or remove a real-time FPS/frame-time/memory overlay on the page. The overlay is a semi-transparent HUD in the top-right corner showing live performance metrics.',
+    category: 'Performance',
+    args: {
+      action: {
+        name: 'action',
+        type: 'string',
+        description: '"start" to inject the overlay, "stop" to remove it.',
+        required: true,
+        enum: ['start', 'stop'],
+      },
+    },
+  },
   install_extension: {
     description:
       'Installs a Chrome extension from the given path. (requires flag: --categoryExtensions=true)',
@@ -569,6 +778,34 @@ export const commands: Commands = {
         type: 'string',
         description: 'Absolute path to the unpacked extension folder.',
         required: true,
+      },
+    },
+  },
+  keyboard_sequence: {
+    description:
+      'Press a sequence of keys or key combinations. Each entry can be a single key or a combo like "Control+S". Useful for testing keyboard shortcuts and multi-key game controls.',
+    category: 'Input automation',
+    args: {
+      keys: {
+        name: 'keys',
+        type: 'array',
+        description:
+          'Array of keys or key combos to press in order, e.g. ["Tab", "Tab", "Enter"] or ["Control+S", "Control+Z"]',
+        required: true,
+      },
+      delayMs: {
+        name: 'delayMs',
+        type: 'number',
+        description:
+          'Delay between each key press in milliseconds. Default is 0.',
+        required: false,
+      },
+      includeSnapshot: {
+        name: 'includeSnapshot',
+        type: 'boolean',
+        description:
+          'Whether to include a snapshot in the response. Default is false.',
+        required: false,
       },
     },
   },
@@ -703,6 +940,32 @@ export const commands: Commands = {
       'Lists all WebMCP tools the page exposes. (requires flag: --categoryExperimentalWebmcp=true)',
     category: 'WebMCP',
     args: {},
+  },
+  mouse_move: {
+    description:
+      'Move the mouse cursor without clicking. Useful for triggering hover states.',
+    category: 'Input automation',
+    args: {
+      x: {
+        name: 'x',
+        type: 'number',
+        description: 'The x coordinate',
+        required: true,
+      },
+      y: {
+        name: 'y',
+        type: 'number',
+        description: 'The y coordinate',
+        required: true,
+      },
+      includeSnapshot: {
+        name: 'includeSnapshot',
+        type: 'boolean',
+        description:
+          'Whether to include a snapshot in the response. Default is false.',
+        required: false,
+      },
+    },
   },
   navigate_page: {
     description:
@@ -925,6 +1188,50 @@ export const commands: Commands = {
     category: 'Debugging',
     args: {},
   },
+  screenshot_diff: {
+    description:
+      'Compare the current viewport screenshot against a baseline image file. Returns pixel-level diff statistics including diff percentage, max color distance, and bounding boxes of changed regions. Optionally saves a diff visualization image. Useful for automated game UI regression testing and animation frame comparison.',
+    category: 'Debugging',
+    args: {
+      baselinePath: {
+        name: 'baselinePath',
+        type: 'string',
+        description:
+          'Path to the baseline (reference) image file to compare against.',
+        required: true,
+      },
+      tolerance: {
+        name: 'tolerance',
+        type: 'number',
+        description:
+          'Per-pixel color distance tolerance (Euclidean in RGB space, 0-765). 0 = exact match, 30 = slight anti-aliasing allowed, 100 = aggressive tolerance for animations. Default 30.',
+        required: false,
+        default: 30,
+      },
+      alphaTolerance: {
+        name: 'alphaTolerance',
+        type: 'number',
+        description:
+          'Alpha channel tolerance (0-255). Useful when compositing causes alpha differences. Default 50.',
+        required: false,
+        default: 50,
+      },
+      saveDiffTo: {
+        name: 'saveDiffTo',
+        type: 'string',
+        description:
+          'Path to save the diff visualization image (PNG). Red pixels show differences, gray pixels show matches.',
+        required: false,
+      },
+      maxRegions: {
+        name: 'maxRegions',
+        type: 'integer',
+        description: 'Maximum number of diff regions to report. Default 5.',
+        required: false,
+        default: 5,
+      },
+    },
+  },
   select_page: {
     description: 'Select a page as a context for future tool calls.',
     category: 'Navigation automation',
@@ -966,7 +1273,7 @@ export const commands: Commands = {
         name: 'format',
         type: 'string',
         description:
-          'Type of format to save the screenshot as. Default is "png"',
+          'Type of format to save the screenshot as. Default is "png". Use "jpeg" or "webp" with quality for smaller files.',
         required: false,
         default: 'png',
         enum: ['png', 'jpeg', 'webp'],
@@ -975,7 +1282,21 @@ export const commands: Commands = {
         name: 'quality',
         type: 'number',
         description:
-          'Compression quality for JPEG and WebP formats (0-100). Higher values mean better quality but larger file sizes. Ignored for PNG format.',
+          'Compression quality for JPEG and WebP formats (0-100). Higher values mean better quality but larger file sizes. Ignored for PNG format. Recommended: 80 for JPEG, 85 for WebP.',
+        required: false,
+      },
+      maxWidth: {
+        name: 'maxWidth',
+        type: 'integer',
+        description:
+          'Maximum width in pixels. The screenshot will be downscaled to fit within this width while preserving aspect ratio. Useful for reducing file size.',
+        required: false,
+      },
+      maxHeight: {
+        name: 'maxHeight',
+        type: 'integer',
+        description:
+          'Maximum height in pixels. The screenshot will be downscaled to fit within this height while preserving aspect ratio.',
         required: false,
       },
       uid: {
@@ -1092,5 +1413,36 @@ export const commands: Commands = {
         required: false,
       },
     },
+  },
+  websocket_monitor_get: {
+    description:
+      'Get captured WebSocket events. Returns lifecycle events (created, handshake, closed) and message frames.',
+    category: 'Network',
+    args: {
+      types: {
+        name: 'types',
+        type: 'array',
+        description: 'Filter by event types. When omitted, returns all events.',
+        required: false,
+      },
+      maxEvents: {
+        name: 'maxEvents',
+        type: 'integer',
+        description: 'Maximum number of events to return. Default 50.',
+        required: false,
+        default: 50,
+      },
+    },
+  },
+  websocket_monitor_start: {
+    description:
+      'Start monitoring WebSocket activity on the page via CDP Network domain. Captures: connection creation, handshake, frames sent/received, and closures. Call websocket_monitor_stop to detach. Events are stored in memory and can be queried with websocket_monitor_get.',
+    category: 'Network',
+    args: {},
+  },
+  websocket_monitor_stop: {
+    description: 'Stop WebSocket monitoring and detach CDP Network listeners.',
+    category: 'Network',
+    args: {},
   },
 } as const;

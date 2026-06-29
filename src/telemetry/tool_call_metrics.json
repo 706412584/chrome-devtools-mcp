@@ -491,6 +491,14 @@
       {
         "name": "file_path_length",
         "argType": "number"
+      },
+      {
+        "name": "max_width",
+        "argType": "number"
+      },
+      {
+        "name": "max_height",
+        "argType": "number"
       }
     ]
   },
@@ -810,5 +818,216 @@
         "argType": "number"
       }
     ]
+  },
+  {
+    "name": "asset_monitor_get",
+    "args": [
+      {
+        "name": "filter_length",
+        "argType": "number"
+      },
+      {
+        "name": "since_ms",
+        "argType": "number"
+      },
+      {
+        "name": "max_results",
+        "argType": "number"
+      }
+    ]
+  },
+  {
+    "name": "asset_monitor_start",
+    "args": []
+  },
+  {
+    "name": "browser_connect",
+    "args": [
+      {
+        "name": "user_data_dir_length",
+        "argType": "number"
+      },
+      {
+        "name": "ws_endpoint_length",
+        "argType": "number"
+      },
+      {
+        "name": "profile_length",
+        "argType": "number"
+      }
+    ]
+  },
+  {
+    "name": "browser_discover",
+    "args": []
+  },
+  {
+    "name": "canvas_info",
+    "args": []
+  },
+  {
+    "name": "console_intercept_start",
+    "args": []
+  },
+  {
+    "name": "console_intercept_stop",
+    "args": []
+  },
+  {
+    "name": "console_search",
+    "args": [
+      {
+        "name": "query_length",
+        "argType": "number"
+      },
+      {
+        "name": "types_length",
+        "argType": "number"
+      },
+      {
+        "name": "since_ms",
+        "argType": "number"
+      },
+      {
+        "name": "max_results",
+        "argType": "number"
+      }
+    ]
+  },
+  {
+    "name": "console_stats",
+    "args": []
+  },
+  {
+    "name": "game_state",
+    "args": [
+      {
+        "name": "preset",
+        "argType": "string"
+      },
+      {
+        "name": "function_length",
+        "argType": "number"
+      },
+      {
+        "name": "pretty",
+        "argType": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "game_stats",
+    "args": [
+      {
+        "name": "duration_ms",
+        "argType": "number"
+      },
+      {
+        "name": "max_samples",
+        "argType": "number"
+      }
+    ]
+  },
+  {
+    "name": "game_test",
+    "args": [
+      {
+        "name": "steps_length",
+        "argType": "number"
+      },
+      {
+        "name": "baseline_dir_length",
+        "argType": "number"
+      }
+    ]
+  },
+  {
+    "name": "inject_game_overlay",
+    "args": [
+      {
+        "name": "action",
+        "argType": "string"
+      }
+    ]
+  },
+  {
+    "name": "keyboard_sequence",
+    "args": [
+      {
+        "name": "keys_count",
+        "argType": "number"
+      },
+      {
+        "name": "delay_ms",
+        "argType": "number"
+      },
+      {
+        "name": "include_snapshot",
+        "argType": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "mouse_move",
+    "args": [
+      {
+        "name": "x",
+        "argType": "number"
+      },
+      {
+        "name": "y",
+        "argType": "number"
+      },
+      {
+        "name": "include_snapshot",
+        "argType": "boolean"
+      }
+    ]
+  },
+  {
+    "name": "screenshot_diff",
+    "args": [
+      {
+        "name": "baseline_path_length",
+        "argType": "number"
+      },
+      {
+        "name": "tolerance",
+        "argType": "number"
+      },
+      {
+        "name": "alpha_tolerance",
+        "argType": "number"
+      },
+      {
+        "name": "save_diff_to_length",
+        "argType": "number"
+      },
+      {
+        "name": "max_regions",
+        "argType": "number"
+      }
+    ]
+  },
+  {
+    "name": "websocket_monitor_get",
+    "args": [
+      {
+        "name": "types_count",
+        "argType": "number"
+      },
+      {
+        "name": "max_events",
+        "argType": "number"
+      }
+    ]
+  },
+  {
+    "name": "websocket_monitor_start",
+    "args": []
+  },
+  {
+    "name": "websocket_monitor_stop",
+    "args": []
   }
 ]
