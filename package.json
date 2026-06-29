@@ -1,6 +1,6 @@
 {
   "name": "chrome-devtools-mcp-game",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Chrome DevTools MCP for game development — cross-origin iframe clicks, pixel-level screenshot diff, FPS monitoring, asset tracking, automated testing",
   "type": "module",
   "bin": {
