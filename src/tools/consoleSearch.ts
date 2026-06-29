@@ -68,7 +68,12 @@ const INTERCEPTOR_UNINSTALL_SCRIPT = `
 })()
 `;
 
-const SEARCH_SCRIPT = (query: string, typeFilter: string | null, maxResults: number, sinceMs: number | null) => `
+const SEARCH_SCRIPT = (
+  query: string,
+  typeFilter: string | null,
+  maxResults: number,
+  sinceMs: number | null,
+) => `
 (() => {
   const messages = window.__mcp_console_capture__ || [];
   const now = Date.now();
@@ -143,7 +148,9 @@ export const consoleInterceptStart = definePageTool({
   blockedByDialog: false,
   verifyFilesSchema: [],
   handler: async (request, response) => {
-    const result = await request.page.pptrPage.evaluate(INTERCEPTOR_INSTALL_SCRIPT);
+    const result = await request.page.pptrPage.evaluate(
+      INTERCEPTOR_INSTALL_SCRIPT,
+    );
     response.appendResponseLine(String(result));
   },
 });
@@ -151,7 +158,8 @@ export const consoleInterceptStart = definePageTool({
 // ─── console_intercept_stop ─────────────────────────────────────────────────
 export const consoleInterceptStop = definePageTool({
   name: 'console_intercept_stop',
-  description: 'Clear the console capture buffer. Does not uninstall the interceptor (messages will continue to be captured).',
+  description:
+    'Clear the console capture buffer. Does not uninstall the interceptor (messages will continue to be captured).',
   annotations: {
     category: ToolCategory.DEBUGGING,
     readOnlyHint: false,
@@ -160,7 +168,9 @@ export const consoleInterceptStop = definePageTool({
   blockedByDialog: false,
   verifyFilesSchema: [],
   handler: async (request, response) => {
-    const result = await request.page.pptrPage.evaluate(INTERCEPTOR_UNINSTALL_SCRIPT);
+    const result = await request.page.pptrPage.evaluate(
+      INTERCEPTOR_UNINSTALL_SCRIPT,
+    );
     response.appendResponseLine(String(result));
   },
 });
@@ -207,7 +217,12 @@ export const consoleSearch = definePageTool({
   verifyFilesSchema: [],
   handler: async (request, response) => {
     const {query, types, sinceMs, maxResults} = request.params;
-    const script = SEARCH_SCRIPT(query || '', types || null, maxResults, sinceMs || null);
+    const script = SEARCH_SCRIPT(
+      query || '',
+      types || null,
+      maxResults,
+      sinceMs || null,
+    );
     const result = await request.page.pptrPage.evaluate(script);
 
     if (typeof result === 'string') {
@@ -215,7 +230,11 @@ export const consoleSearch = definePageTool({
       return;
     }
 
-    const data = result as {total: number; returned: number; messages: Array<{type: string; text: string; time: number}>};
+    const data = result as {
+      total: number;
+      returned: number;
+      messages: Array<{type: string; text: string; time: number}>;
+    };
 
     response.appendResponseLine(
       `Found ${data.total} matching messages, showing ${data.returned}:`,
@@ -231,7 +250,8 @@ export const consoleSearch = definePageTool({
 // ─── console_stats ──────────────────────────────────────────────────────────
 export const consoleStats = definePageTool({
   name: 'console_stats',
-  description: 'Show statistics about captured console messages: total count, breakdown by type, time range.',
+  description:
+    'Show statistics about captured console messages: total count, breakdown by type, time range.',
   annotations: {
     category: ToolCategory.DEBUGGING,
     readOnlyHint: true,
@@ -247,7 +267,13 @@ export const consoleStats = definePageTool({
       return;
     }
 
-    const data = result as {total: number; byType: Record<string, number>; oldest: number | null; newest: number | null; installed: boolean};
+    const data = result as {
+      total: number;
+      byType: Record<string, number>;
+      oldest: number | null;
+      newest: number | null;
+      installed: boolean;
+    };
 
     response.appendResponseLine(`Interceptor installed: ${data.installed}`);
     response.appendResponseLine(`Total captured: ${data.total}`);

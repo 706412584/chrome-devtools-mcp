@@ -243,7 +243,11 @@ const ASSET_MONITOR_INSTALL = `
 })()
 `;
 
-const ASSET_MONITOR_QUERY = (filter: string | null, maxResults: number, _sinceMs: number | null) => `
+const ASSET_MONITOR_QUERY = (
+  filter: string | null,
+  maxResults: number,
+  _sinceMs: number | null,
+) => `
 (() => {
   const entries = window.__mcp_asset_monitor__ || [];
   const now = Date.now();
@@ -343,7 +347,11 @@ export const assetMonitorGet = definePageTool({
   verifyFilesSchema: [],
   handler: async (request, response) => {
     const {filter, sinceMs, maxResults} = request.params;
-    const script = ASSET_MONITOR_QUERY(filter || null, maxResults, sinceMs || null);
+    const script = ASSET_MONITOR_QUERY(
+      filter || null,
+      maxResults,
+      sinceMs || null,
+    );
     const result = await request.page.pptrPage.evaluate(script);
 
     if (typeof result === 'string') {
@@ -356,11 +364,27 @@ export const assetMonitorGet = definePageTool({
       totalSizeKB: number;
       totalDurationMs: number;
       failCount: number;
-      byExt: Record<string, {count: number; totalSize: number; totalDuration: number; failed: number}>;
-      recent: Array<{url: string; ext: string; status: number; duration: number; sizeKB: number}>;
+      byExt: Record<
+        string,
+        {
+          count: number;
+          totalSize: number;
+          totalDuration: number;
+          failed: number;
+        }
+      >;
+      recent: Array<{
+        url: string;
+        ext: string;
+        status: number;
+        duration: number;
+        sizeKB: number;
+      }>;
     };
 
-    response.appendResponseLine(`Assets: ${data.total} loaded, ${data.totalSizeKB}KB total, ${data.totalDurationMs}ms total`);
+    response.appendResponseLine(
+      `Assets: ${data.total} loaded, ${data.totalSizeKB}KB total, ${data.totalDurationMs}ms total`,
+    );
     if (data.failCount > 0) {
       response.appendResponseLine(`⚠ Failed: ${data.failCount}`);
     }
@@ -368,7 +392,9 @@ export const assetMonitorGet = definePageTool({
 
     // Summary by extension
     response.appendResponseLine('By type:');
-    const sorted = Object.entries(data.byExt).sort((a, b) => b[1].totalSize - a[1].totalSize);
+    const sorted = Object.entries(data.byExt).sort(
+      (a, b) => b[1].totalSize - a[1].totalSize,
+    );
     for (const [ext, stats] of sorted) {
       const sizeKB = Math.round(stats.totalSize / 1024);
       const avgMs = Math.round(stats.totalDuration / stats.count);
@@ -382,7 +408,8 @@ export const assetMonitorGet = definePageTool({
       response.appendResponseLine('');
       response.appendResponseLine('Recent:');
       for (const entry of data.recent) {
-        const statusIcon = entry.status >= 200 && entry.status < 400 ? '✓' : '✗';
+        const statusIcon =
+          entry.status >= 200 && entry.status < 400 ? '✓' : '✗';
         response.appendResponseLine(
           `  ${statusIcon} [${entry.ext}] ${entry.url} — ${entry.duration}ms, ${entry.sizeKB}KB`,
         );
@@ -494,15 +521,24 @@ export const canvasInfo = definePageTool({
     };
 
     response.appendResponseLine(`Device Pixel Ratio: ${data.devicePixelRatio}`);
-    response.appendResponseLine(`Screen: ${data.screenWidth}×${data.screenHeight}`);
-    response.appendResponseLine(`Viewport: ${data.viewportWidth}×${data.viewportHeight}`);
+    response.appendResponseLine(
+      `Screen: ${data.screenWidth}×${data.screenHeight}`,
+    );
+    response.appendResponseLine(
+      `Viewport: ${data.viewportWidth}×${data.viewportHeight}`,
+    );
     response.appendResponseLine(`Canvas elements: ${data.canvasCount}`);
     response.appendResponseLine('');
 
     for (const canvas of data.canvases) {
-      response.appendResponseLine(`Canvas #${canvas.index} [${canvas.id}] ${canvas.width}×${canvas.height} (client: ${canvas.clientWidth}×${canvas.clientHeight})`);
+      response.appendResponseLine(
+        `Canvas #${canvas.index} [${canvas.id}] ${canvas.width}×${canvas.height} (client: ${canvas.clientWidth}×${canvas.clientHeight})`,
+      );
 
-      if (canvas.style && (canvas.style as Record<string, string>).width !== '(auto)') {
+      if (
+        canvas.style &&
+        (canvas.style as Record<string, string>).width !== '(auto)'
+      ) {
         response.appendResponseLine(`  Style: ${JSON.stringify(canvas.style)}`);
       }
 
@@ -513,12 +549,16 @@ export const canvasInfo = definePageTool({
           response.appendResponseLine(`  GPU: ${gl.gpuRenderer}`);
         }
         response.appendResponseLine(`  Max Texture: ${gl.maxTextureSize}px`);
-        response.appendResponseLine(`  AA: ${gl.antialias}, Alpha: ${gl.alpha}`);
+        response.appendResponseLine(
+          `  AA: ${gl.antialias}, Alpha: ${gl.alpha}`,
+        );
       }
 
       if (canvas.canvas2d) {
         const c2d = canvas.canvas2d as Record<string, unknown>;
-        response.appendResponseLine(`  Canvas2D: smoothing=${c2d.imageSmoothingEnabled}, quality=${c2d.imageSmoothingQuality}`);
+        response.appendResponseLine(
+          `  Canvas2D: smoothing=${c2d.imageSmoothingEnabled}, quality=${c2d.imageSmoothingQuality}`,
+        );
       }
     }
   },

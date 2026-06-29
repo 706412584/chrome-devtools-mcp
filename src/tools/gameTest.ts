@@ -154,7 +154,9 @@ async function runStep(
           };
         }
         // uid-based click — find element and click via CDP fallback
-        throw new Error('click in test requires x,y coordinates (uid-based not supported in test runner)');
+        throw new Error(
+          'click in test requires x,y coordinates (uid-based not supported in test runner)',
+        );
       }
 
       case 'screenshot': {
@@ -170,7 +172,10 @@ async function runStep(
         });
 
         // Save current screenshot
-        const currentPath = path.join(baselineDir, `current-${name}.${format === 'jpeg' ? 'jpg' : format}`);
+        const currentPath = path.join(
+          baselineDir,
+          `current-${name}.${format === 'jpeg' ? 'jpg' : format}`,
+        );
         await fs.writeFile(currentPath, screenshotData);
 
         // Compare against baseline if provided
@@ -219,9 +224,20 @@ async function runStep(
             throw new Error(`Comparison failed: ${comparison}`);
           }
 
-          const {curData, baseData, w, h} = comparison as {curData: number[]; baseData: number[]; w: number; h: number};
+          const {curData, baseData, w, h} = comparison as {
+            curData: number[];
+            baseData: number[];
+            w: number;
+            h: number;
+          };
           const tolerance = (params.tolerance as number) ?? 30;
-          const result = comparePixels(Buffer.from(baseData), Buffer.from(curData), w, h, tolerance);
+          const result = comparePixels(
+            Buffer.from(baseData),
+            Buffer.from(curData),
+            w,
+            h,
+            tolerance,
+          );
 
           const threshold = (params.threshold as number) ?? 5;
           const passed = result.diffPercent <= threshold;
@@ -260,8 +276,10 @@ async function runStep(
 
       case 'assert_text': {
         const text = params.text as string;
-        const present = params.present as boolean ?? true;
-        const bodyText = await page.evaluate(() => document.body?.innerText ?? '');
+        const present = (params.present as boolean) ?? true;
+        const bodyText = await page.evaluate(
+          () => document.body?.innerText ?? '',
+        );
         const found = bodyText.includes(text);
         const passed = present ? found : !found;
         return {
@@ -278,15 +296,21 @@ async function runStep(
         const errors = await page.evaluate(() => {
           const logs: string[] = [];
           // Check for error indicators in the page
-          const errorElements = document.querySelectorAll('[class*="error"], [class*="Error"]');
-          errorElements.forEach(el => logs.push(el.textContent?.substring(0, 100) ?? ''));
+          const errorElements = document.querySelectorAll(
+            '[class*="error"], [class*="Error"]',
+          );
+          errorElements.forEach(el =>
+            logs.push(el.textContent?.substring(0, 100) ?? ''),
+          );
           return logs;
         });
         const passed = errors.length === 0;
         return {
           step: action,
           status: passed ? 'pass' : 'fail',
-          message: passed ? 'No error elements found' : `Found ${errors.length} error elements: ${errors.join(', ')}`,
+          message: passed
+            ? 'No error elements found'
+            : `Found ${errors.length} error elements: ${errors.join(', ')}`,
           durationMs: Date.now() - start,
         };
       }
@@ -325,7 +349,7 @@ export const gameTest = definePageTool({
       .string()
       .describe(
         'JSON array of test steps. Each step: {action, url?, name?, text?, function?, present?, x?, y?, timeMs?, timeout?, format?, quality?, baseline?, tolerance?, threshold?}. ' +
-        'Actions: navigate, wait, wait_for, wait_for_canvas, click, screenshot, eval, assert_text, assert_no_errors.',
+          'Actions: navigate, wait, wait_for, wait_for_canvas, click, screenshot, eval, assert_text, assert_no_errors.',
       ),
     baselineDir: zod
       .string()
@@ -338,7 +362,8 @@ export const gameTest = definePageTool({
   verifyFilesSchema: ['baselineDir'],
   handler: async (request, response) => {
     const {steps: stepsJson, baselineDir: rawBaselineDir} = request.params;
-    const baselineDir = rawBaselineDir ?? path.join(process.cwd(), 'test-baselines');
+    const baselineDir =
+      rawBaselineDir ?? path.join(process.cwd(), 'test-baselines');
 
     let steps: TestStep[];
     try {
@@ -361,7 +386,8 @@ export const gameTest = definePageTool({
       const result = await runStep(step, page, baselineDir);
       results.push(result);
 
-      const icon = result.status === 'pass' ? '✓' : result.status === 'fail' ? '✗' : '○';
+      const icon =
+        result.status === 'pass' ? '✓' : result.status === 'fail' ? '✗' : '○';
       response.appendResponseLine(
         `  ${icon} Step ${i + 1}/${steps.length} [${result.step}] ${result.message} (${result.durationMs}ms)`,
       );

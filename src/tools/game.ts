@@ -225,9 +225,7 @@ export const injectGameOverlay = definePageTool({
   schema: {
     action: zod
       .enum(['start', 'stop'])
-      .describe(
-        '"start" to inject the overlay, "stop" to remove it.',
-      ),
+      .describe('"start" to inject the overlay, "stop" to remove it.'),
   },
   blockedByDialog: true,
   verifyFilesSchema: [],

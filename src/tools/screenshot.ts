@@ -165,12 +165,10 @@ export const screenshot = definePageTool(args => {
       // Compute a downscale clip when maxWidth/maxHeight is set (per-call or CLI-level)
       // and the source exceeds either bound. Per-call params take precedence.
       const effectiveMaxWidth = request.params.maxWidth ?? screenshotMaxWidth;
-      const effectiveMaxHeight = request.params.maxHeight ?? screenshotMaxHeight;
+      const effectiveMaxHeight =
+        request.params.maxHeight ?? screenshotMaxHeight;
       let clip: ScreenshotClip | undefined;
-      if (
-        effectiveMaxWidth !== undefined ||
-        effectiveMaxHeight !== undefined
-      ) {
+      if (effectiveMaxWidth !== undefined || effectiveMaxHeight !== undefined) {
         const box = await getSourceBox(page, element, fullPage);
         if (box) {
           clip = computeDownscaleClip(

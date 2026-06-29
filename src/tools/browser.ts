@@ -107,14 +107,19 @@ function getChromeProfileDirs(): string[] {
 
   if (platform === 'win32') {
     // Windows: Chrome profiles
-    const localAppData = process.env['LOCALAPPDATA'] ?? path.join(home, 'AppData', 'Local');
+    const localAppData =
+      process.env['LOCALAPPDATA'] ?? path.join(home, 'AppData', 'Local');
     dirs.push(path.join(localAppData, 'Google', 'Chrome', 'User Data'));
     // Edge
     dirs.push(path.join(localAppData, 'Microsoft', 'Edge', 'User Data'));
   } else if (platform === 'darwin') {
     // macOS
-    dirs.push(path.join(home, 'Library', 'Application Support', 'Google', 'Chrome'));
-    dirs.push(path.join(home, 'Library', 'Application Support', 'Microsoft Edge'));
+    dirs.push(
+      path.join(home, 'Library', 'Application Support', 'Google', 'Chrome'),
+    );
+    dirs.push(
+      path.join(home, 'Library', 'Application Support', 'Microsoft Edge'),
+    );
   } else {
     // Linux
     dirs.push(path.join(home, '.config', 'google-chrome'));
@@ -124,7 +129,9 @@ function getChromeProfileDirs(): string[] {
 
   // MCP's own persistent profiles
   dirs.push(path.join(home, '.cache', 'chrome-devtools-mcp', 'chrome-profile'));
-  dirs.push(path.join(home, '.cache', 'chrome-devtools-mcp-cli', 'chrome-profile'));
+  dirs.push(
+    path.join(home, '.cache', 'chrome-devtools-mcp-cli', 'chrome-profile'),
+  );
 
   return dirs;
 }
@@ -149,8 +156,18 @@ export const browserDiscover = defineTool({
 
     // 1. Check MCP persistent profiles
     const mcpProfiles = [
-      path.join(os.homedir(), '.cache', 'chrome-devtools-mcp', 'chrome-profile'),
-      path.join(os.homedir(), '.cache', 'chrome-devtools-mcp-cli', 'chrome-profile'),
+      path.join(
+        os.homedir(),
+        '.cache',
+        'chrome-devtools-mcp',
+        'chrome-profile',
+      ),
+      path.join(
+        os.homedir(),
+        '.cache',
+        'chrome-devtools-mcp-cli',
+        'chrome-profile',
+      ),
     ];
 
     for (const profileDir of mcpProfiles) {
@@ -231,12 +248,18 @@ export const browserDiscover = defineTool({
       response.appendResponseLine('No Chrome instances or profiles found.');
       response.appendResponseLine('');
       response.appendResponseLine('To create a persistent profile:');
-      response.appendResponseLine('  1. Start Chrome with: chrome --remote-debugging-port=9222');
-      response.appendResponseLine('  2. Or use MCP without --isolated flag to auto-persist');
+      response.appendResponseLine(
+        '  1. Start Chrome with: chrome --remote-debugging-port=9222',
+      );
+      response.appendResponseLine(
+        '  2. Or use MCP without --isolated flag to auto-persist',
+      );
       return;
     }
 
-    response.appendResponseLine(`Found ${instances.length} browser instances/profiles:`);
+    response.appendResponseLine(
+      `Found ${instances.length} browser instances/profiles:`,
+    );
     response.appendResponseLine('');
 
     for (let i = 0; i < instances.length; i++) {
@@ -255,7 +278,9 @@ export const browserDiscover = defineTool({
       if (inst.wsEndpoint) {
         response.appendResponseLine(`   wsEndpoint: ${inst.wsEndpoint}`);
       }
-      response.appendResponseLine(`   Persistent: ${inst.persistent ? 'Yes (session saved)' : 'No'}`);
+      response.appendResponseLine(
+        `   Persistent: ${inst.persistent ? 'Yes (session saved)' : 'No'}`,
+      );
       response.appendResponseLine('');
     }
 
@@ -289,11 +314,15 @@ export const browserConnect = defineTool({
     wsEndpoint: zod
       .string()
       .optional()
-      .describe('WebSocket endpoint to connect to (e.g., ws://127.0.0.1:9222/devtools/browser/xxx).'),
+      .describe(
+        'WebSocket endpoint to connect to (e.g., ws://127.0.0.1:9222/devtools/browser/xxx).',
+      ),
     profile: zod
       .string()
       .optional()
-      .describe('Chrome profile name within the userDataDir (e.g., "Default", "Profile 1").'),
+      .describe(
+        'Chrome profile name within the userDataDir (e.g., "Default", "Profile 1").',
+      ),
   },
   blockedByDialog: false,
   verifyFilesSchema: [],
@@ -308,20 +337,28 @@ export const browserConnect = defineTool({
     response.appendResponseLine('');
 
     if (wsEndpoint) {
-      response.appendResponseLine('Option A — Direct WebSocket (recommended for running instances):');
+      response.appendResponseLine(
+        'Option A — Direct WebSocket (recommended for running instances):',
+      );
       response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({
-        mcpServers: {
-          'chrome-devtools': {
-            command: 'node',
-            args: [
-              'D:\\Marker\\chrome-devtools-mcp\\build\\src\\bin\\chrome-devtools-mcp.js',
-              '--wsEndpoint',
-              wsEndpoint,
-            ],
+      response.appendResponseLine(
+        JSON.stringify(
+          {
+            mcpServers: {
+              'chrome-devtools': {
+                command: 'node',
+                args: [
+                  'D:\\Marker\\chrome-devtools-mcp\\build\\src\\bin\\chrome-devtools-mcp.js',
+                  '--wsEndpoint',
+                  wsEndpoint,
+                ],
+              },
+            },
           },
-        },
-      }, null, 2));
+          null,
+          2,
+        ),
+      );
       response.appendResponseLine('```');
     }
 
@@ -336,21 +373,33 @@ export const browserConnect = defineTool({
       }
       args.push('--experimentalVision');
 
-      response.appendResponseLine('Option B — Persistent userDataDir (survives restarts):');
+      response.appendResponseLine(
+        'Option B — Persistent userDataDir (survives restarts):',
+      );
       response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify({
-        mcpServers: {
-          'chrome-devtools': {
-            command: 'node',
-            args,
+      response.appendResponseLine(
+        JSON.stringify(
+          {
+            mcpServers: {
+              'chrome-devtools': {
+                command: 'node',
+                args,
+              },
+            },
           },
-        },
-      }, null, 2));
+          null,
+          2,
+        ),
+      );
       response.appendResponseLine('```');
     }
 
     response.appendResponseLine('');
-    response.appendResponseLine('Copy the relevant config into your plugin.json file.');
-    response.appendResponseLine('The session (cookies, login state) will persist across restarts.');
+    response.appendResponseLine(
+      'Copy the relevant config into your plugin.json file.',
+    );
+    response.appendResponseLine(
+      'The session (cookies, login state) will persist across restarts.',
+    );
   },
 });

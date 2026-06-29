@@ -76,19 +76,25 @@ export const websocketMonitorStart = definePageTool({
       });
     });
 
-    on('Network.webSocketWillSendHandshakeRequest', (params: Record<string, unknown>) => {
-      addEvent(pageId, {
-        type: 'handshake_sent',
-        requestId: params.requestId as string,
-      });
-    });
+    on(
+      'Network.webSocketWillSendHandshakeRequest',
+      (params: Record<string, unknown>) => {
+        addEvent(pageId, {
+          type: 'handshake_sent',
+          requestId: params.requestId as string,
+        });
+      },
+    );
 
-    on('Network.webSocketHandshakeResponseReceived', (params: Record<string, unknown>) => {
-      addEvent(pageId, {
-        type: 'handshake_received',
-        requestId: params.requestId as string,
-      });
-    });
+    on(
+      'Network.webSocketHandshakeResponseReceived',
+      (params: Record<string, unknown>) => {
+        addEvent(pageId, {
+          type: 'handshake_received',
+          requestId: params.requestId as string,
+        });
+      },
+    );
 
     on('Network.webSocketFrameSent', (params: Record<string, unknown>) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,9 +167,7 @@ export const websocketMonitorGet = definePageTool({
         ]),
       )
       .optional()
-      .describe(
-        'Filter by event types. When omitted, returns all events.',
-      ),
+      .describe('Filter by event types. When omitted, returns all events.'),
     maxEvents: zod
       .number()
       .int()
@@ -194,7 +198,9 @@ export const websocketMonitorGet = definePageTool({
     );
 
     for (const evt of events) {
-      const time = new Date(evt.timestamp as number).toISOString().substring(11, 23);
+      const time = new Date(evt.timestamp as number)
+        .toISOString()
+        .substring(11, 23);
       let detail = '';
       if (evt.url) {
         detail += ` → ${evt.url}`;

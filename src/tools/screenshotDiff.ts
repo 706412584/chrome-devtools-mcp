@@ -31,7 +31,13 @@ function comparePixels(
   diffPercent: number;
   maxDiff: number;
   diffImage: Buffer;
-  diffRegions: Array<{x: number; y: number; w: number; h: number; severity: string}>;
+  diffRegions: Array<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    severity: string;
+  }>;
 } {
   const totalPixels = width * height;
   const diffImage = Buffer.alloc(width * height * 4);
@@ -68,13 +74,13 @@ function comparePixels(
 
       // Red channel for diff pixels, intensity proportional to difference
       const intensity = Math.min(255, Math.round(colorDist * 3));
-      diffImage[offset] = 255;     // R
-      diffImage[offset + 1] = 0;   // G
-      diffImage[offset + 2] = 0;   // B
+      diffImage[offset] = 255; // R
+      diffImage[offset + 1] = 0; // G
+      diffImage[offset + 2] = 0; // B
       diffImage[offset + 3] = Math.min(255, intensity + 100); // A
     } else {
       // Gray out matching pixels
-      const gray = Math.round((r1 + g1 + b1) / 3 * 0.3);
+      const gray = Math.round(((r1 + g1 + b1) / 3) * 0.3);
       diffImage[offset] = gray;
       diffImage[offset + 1] = gray;
       diffImage[offset + 2] = gray;
@@ -104,7 +110,13 @@ function findDiffRegions(
   height: number,
 ): Array<{x: number; y: number; w: number; h: number; severity: string}> {
   const visited = new Uint8Array(mask.length);
-  const regions: Array<{x: number; y: number; w: number; h: number; severity: string}> = [];
+  const regions: Array<{
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    severity: string;
+  }> = [];
 
   // Simple scanline approach: find bounding boxes of connected diff regions
   for (let y = 0; y < height; y++) {
@@ -114,7 +126,10 @@ function findDiffRegions(
         // BFS to find connected component
         const queue = [idx];
         visited[idx] = 1;
-        let minX = x, maxX = x, minY = y, maxY = y;
+        let minX = x,
+          maxX = x,
+          minY = y,
+          maxY = y;
 
         while (queue.length > 0) {
           const cur = queue.shift()!;
@@ -126,7 +141,12 @@ function findDiffRegions(
           maxY = Math.max(maxY, cy);
 
           // 4-connected neighbors
-          for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          for (const [dx, dy] of [
+            [-1, 0],
+            [1, 0],
+            [0, -1],
+            [0, 1],
+          ]) {
             const nx = cx + dx;
             const ny = cy + dy;
             if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
@@ -182,7 +202,7 @@ export const screenshotDiff = definePageTool({
       .default(30)
       .describe(
         'Per-pixel color distance tolerance (Euclidean in RGB space, 0-765). ' +
-        '0 = exact match, 30 = slight anti-aliasing allowed, 100 = aggressive tolerance for animations. Default 30.',
+          '0 = exact match, 30 = slight anti-aliasing allowed, 100 = aggressive tolerance for animations. Default 30.',
       ),
     alphaTolerance: zod
       .number()
@@ -275,16 +295,19 @@ export const screenshotDiff = definePageTool({
           img2.src = 'data:image/png;base64,' + b64decode(currentBytes);
         });
       }
-      `.replace('b64decode', (() => {
-        // Inline base64 encoding helper
-        return `(bytes) => {
+      `.replace(
+        'b64decode',
+        (() => {
+          // Inline base64 encoding helper
+          return `(bytes) => {
           let binary = '';
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
           }
           return binary;
         }`;
-      })()),
+        })(),
+      ),
       Buffer.from(baselineData).toString('base64'),
       Buffer.from(currentData).toString('base64'),
     );
@@ -294,7 +317,12 @@ export const screenshotDiff = definePageTool({
       return;
     }
 
-    const {width, height, baseline: bArr, current: cArr} = comparison as {
+    const {
+      width,
+      height,
+      baseline: bArr,
+      current: cArr,
+    } = comparison as {
       width: number;
       height: number;
       baseline: number[];
@@ -360,11 +388,7 @@ export const screenshotDiff = definePageTool({
 
       if (typeof diffB64 === 'string') {
         const diffBuf = Buffer.from(diffB64, 'base64');
-        const {filename} = await context.saveFile(
-          diffBuf,
-          saveDiffTo,
-          '.png',
-        );
+        const {filename} = await context.saveFile(diffBuf, saveDiffTo, '.png');
         response.appendResponseLine(`Diff image saved to ${filename}`);
       }
     }
