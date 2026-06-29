@@ -12,6 +12,8 @@ import * as consoleSearchTools from './consoleSearch.js';
 import * as emulationTools from './emulation.js';
 import * as extensionTools from './extensions.js';
 import * as gameTools from './game.js';
+import * as gameInspectorTools from './gameInspector.js';
+import * as gameTestTools from './gameTest.js';
 import * as inputTools from './input.js';
 import * as lighthouseTools from './lighthouse.js';
 import * as memoryTools from './memory.js';
@@ -39,6 +41,8 @@ export const createTools = (args: ParsedArguments) => {
         ...Object.values(emulationTools),
         ...Object.values(extensionTools),
         ...Object.values(gameTools),
+        ...Object.values(gameInspectorTools),
+        ...Object.values(gameTestTools),
         ...Object.values(inputTools),
         ...Object.values(lighthouseTools),
         ...Object.values(memoryTools),
