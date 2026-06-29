@@ -88,7 +88,11 @@ async function selectNativeSelectOption(handle: ElementHandle<Element>) {
 
 export const click = definePageTool({
   name: 'click',
-  description: `Clicks on the provided element`,
+  description:
+    `Clicks on the provided element. For cross-origin iframes (e.g., game canvases), ` +
+    `automatically falls back to CDP Input.dispatchMouseEvent which penetrates iframe boundaries. ` +
+    `Use offsetX/offsetY to click at a specific position within the element (e.g., a button inside a canvas). ` +
+    `Coordinates are relative to the element's top-left corner.`,
   annotations: {
     category: ToolCategory.INPUT,
     readOnlyHint: false,
@@ -99,6 +103,22 @@ export const click = definePageTool({
       .describe(
         'The uid of an element on the page from the page content snapshot',
       ),
+    offsetX: zod
+      .number()
+      .optional()
+      .describe(
+        'Horizontal offset from the element\'s top-left corner in CSS pixels. ' +
+          'When provided with offsetY, clicks at this position instead of center. ' +
+          'Useful for clicking buttons inside canvas elements.',
+      ),
+    offsetY: zod
+      .number()
+      .optional()
+      .describe(
+        'Vertical offset from the element\'s top-left corner in CSS pixels. ' +
+          'When provided with offsetX, clicks at this position instead of center. ' +
+          'Useful for clicking buttons inside canvas elements.',
+      ),
     dblClick: dblClickSchema,
     includeSnapshot: includeSnapshotSchema,
   },
@@ -106,6 +126,8 @@ export const click = definePageTool({
   verifyFilesSchema: [],
   handler: async (request, response) => {
     const uid = request.params.uid;
+    const {offsetX, offsetY} = request.params;
+    const hasOffset = offsetX !== undefined && offsetY !== undefined;
     const handle = await request.page.getElementByUid(uid);
     const aXNode = request.page.getAXNodeByUid(uid);
     const shouldSelectNativeOption =
@@ -116,6 +138,24 @@ export const click = definePageTool({
           shouldSelectNativeOption &&
           (await selectNativeSelectOption(handle))
         ) {
+          return;
+        }
+
+        // If offsets are specified, skip DOM click and go straight to CDP
+        // to support clicking inside cross-origin iframes/canvases.
+        if (hasOffset) {
+          const box = await handle.boundingBox();
+          if (box) {
+            const x = box.x + offsetX;
+            const y = box.y + offsetY;
+            await request.page.pptrPage.mouse.click(x, y, {
+              count: request.params.dblClick ? 2 : 1,
+            });
+          } else {
+            throw new Error(
+              `Could not determine bounding box for element ${uid}`,
+            );
+          }
           return;
         }
 
@@ -139,10 +179,13 @@ export const click = definePageTool({
           }
         }
       });
+      const posStr = hasOffset
+        ? ` at offset (${offsetX}, ${offsetY})`
+        : '';
       response.appendResponseLine(
         request.params.dblClick
-          ? `Successfully double clicked on the element`
-          : `Successfully clicked on the element`,
+          ? `Successfully double clicked on the element${posStr}`
+          : `Successfully clicked on the element${posStr}`,
       );
       response.attachWaitForResult(result);
       if (request.params.includeSnapshot) {
