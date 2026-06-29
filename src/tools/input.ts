@@ -119,9 +119,25 @@ export const click = definePageTool({
           return;
         }
 
-        await handle.asLocator().click({
-          count: request.params.dblClick ? 2 : 1,
-        });
+        try {
+          await handle.asLocator().click({
+            count: request.params.dblClick ? 2 : 1,
+          });
+        } catch (clickError) {
+          // Cross-origin iframes block DOM-level events from Playwright.
+          // Fall back to CDP Input.dispatchMouseEvent which works at the
+          // compositor level and can penetrate cross-origin boundaries.
+          const box = await handle.boundingBox();
+          if (box) {
+            const x = box.x + box.width / 2;
+            const y = box.y + box.height / 2;
+            await request.page.pptrPage.mouse.click(x, y, {
+              count: request.params.dblClick ? 2 : 1,
+            });
+          } else {
+            throw clickError;
+          }
+        }
       });
       response.appendResponseLine(
         request.params.dblClick

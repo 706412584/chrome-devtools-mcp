@@ -1,7 +1,7 @@
 {
   "name": "chrome-devtools-mcp",
-  "version": "1.4.0",
-  "description": "MCP server for Chrome DevTools",
+  "version": "1.4.1-cross-origin",
+  "description": "MCP server for Chrome DevTools (fork: cross-origin iframe click support via CDP Input fallback)",
   "type": "module",
   "bin": {
     "chrome-devtools-mcp": "./build/src/bin/chrome-devtools-mcp.js",
