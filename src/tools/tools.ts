@@ -6,6 +6,7 @@
 
 import type {ParsedArguments} from '../bin/chrome-devtools-mcp-cli-options.js';
 
+import * as browserTools from './browser.js';
 import * as consoleTools from './console.js';
 import * as consoleSearchTools from './consoleSearch.js';
 import * as emulationTools from './emulation.js';
@@ -32,6 +33,7 @@ export const createTools = (args: ParsedArguments) => {
   const rawTools = args.slim
     ? Object.values(slimTools)
     : [
+        ...Object.values(browserTools),
         ...Object.values(consoleTools),
         ...Object.values(consoleSearchTools),
         ...Object.values(emulationTools),
