@@ -560,3 +560,84 @@ export const pressKey = definePageTool({
     }
   },
 });
+
+export const mouseMove = definePageTool({
+  name: 'mouse_move',
+  description: `Move the mouse cursor without clicking. Useful for triggering hover states.`,
+  annotations: {
+    category: ToolCategory.INPUT,
+    readOnlyHint: false,
+  },
+  schema: {
+    x: zod.number().describe('The x coordinate'),
+    y: zod.number().describe('The y coordinate'),
+    includeSnapshot: includeSnapshotSchema,
+  },
+  blockedByDialog: true,
+  verifyFilesSchema: [],
+  handler: async (request, response) => {
+    const page = request.page;
+    await page.pptrPage.mouse.move(request.params.x, request.params.y);
+    response.appendResponseLine(
+      `Moved mouse to (${request.params.x}, ${request.params.y})`,
+    );
+    if (request.params.includeSnapshot) {
+      response.includeSnapshot();
+    }
+  },
+});
+
+export const keyboardSequence = definePageTool({
+  name: 'keyboard_sequence',
+  description: `Press a sequence of keys or key combinations. Each entry can be a single key or a combo like "Control+S". Useful for testing keyboard shortcuts and multi-key game controls.`,
+  annotations: {
+    category: ToolCategory.INPUT,
+    readOnlyHint: false,
+  },
+  schema: {
+    keys: zod
+      .array(zod.string())
+      .describe(
+        'Array of keys or key combos to press in order, e.g. ["Tab", "Tab", "Enter"] or ["Control+S", "Control+Z"]',
+      ),
+    delayMs: zod
+      .number()
+      .min(0)
+      .optional()
+      .describe('Delay between each key press in milliseconds. Default is 0.'),
+    includeSnapshot: includeSnapshotSchema,
+  },
+  blockedByDialog: true,
+  verifyFilesSchema: [],
+  handler: async (request, response) => {
+    const page = request.page;
+    const {keys, delayMs} = request.params;
+
+    const result = await page.waitForEventsAfterAction(async () => {
+      for (let i = 0; i < keys.length; i++) {
+        const tokens = parseKey(keys[i]);
+        const [key, ...modifiers] = tokens;
+
+        for (const modifier of modifiers) {
+          await page.pptrPage.keyboard.down(modifier);
+        }
+        await page.pptrPage.keyboard.press(key);
+        for (const modifier of modifiers.toReversed()) {
+          await page.pptrPage.keyboard.up(modifier);
+        }
+
+        if (delayMs && delayMs > 0 && i < keys.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+      }
+    });
+
+    response.appendResponseLine(
+      `Pressed ${keys.length} keys: ${keys.join(' → ')}`,
+    );
+    response.attachWaitForResult(result);
+    if (request.params.includeSnapshot) {
+      response.includeSnapshot();
+    }
+  },
+});

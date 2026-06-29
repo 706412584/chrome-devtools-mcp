@@ -1,0 +1,371 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Pixel-level screenshot comparison tool for game UI testing.
+ * Supports tolerance thresholds for animated content and generates diff images.
+ */
+
+import fs from 'node:fs/promises';
+
+import {zod} from '../third_party/index.js';
+
+import {ToolCategory} from './categories.js';
+import {definePageTool} from './ToolDefinition.js';
+
+/**
+ * Compare two RGBA pixel buffers pixel-by-pixel in Node.js.
+ * Returns diff stats and an optional diff image buffer.
+ */
+function comparePixels(
+  baseline: Buffer,
+  current: Buffer,
+  width: number,
+  height: number,
+  tolerance: number,
+  alphaTolerance: number,
+): {
+  totalPixels: number;
+  diffPixels: number;
+  diffPercent: number;
+  maxDiff: number;
+  diffImage: Buffer;
+  diffRegions: Array<{x: number; y: number; w: number; h: number; severity: string}>;
+} {
+  const totalPixels = width * height;
+  const diffImage = Buffer.alloc(width * height * 4);
+  let diffPixels = 0;
+  let maxDiff = 0;
+
+  // Track bounding box of diff regions
+  const diffMask = new Uint8Array(totalPixels);
+
+  for (let i = 0; i < totalPixels; i++) {
+    const offset = i * 4;
+    const r1 = baseline[offset];
+    const g1 = baseline[offset + 1];
+    const b1 = baseline[offset + 2];
+    const a1 = baseline[offset + 3];
+
+    const r2 = current[offset];
+    const g2 = current[offset + 1];
+    const b2 = current[offset + 2];
+    const a2 = current[offset + 3];
+
+    // Color distance (Euclidean in RGBA space)
+    const dr = r1 - r2;
+    const dg = g1 - g2;
+    const db = b1 - b2;
+    const da = a1 - a2;
+    const colorDist = Math.sqrt(dr * dr + dg * dg + db * db);
+    const alphaDist = Math.abs(da);
+
+    if (colorDist > tolerance || alphaDist > alphaTolerance) {
+      diffPixels++;
+      diffMask[i] = 1;
+      maxDiff = Math.max(maxDiff, colorDist);
+
+      // Red channel for diff pixels, intensity proportional to difference
+      const intensity = Math.min(255, Math.round(colorDist * 3));
+      diffImage[offset] = 255;     // R
+      diffImage[offset + 1] = 0;   // G
+      diffImage[offset + 2] = 0;   // B
+      diffImage[offset + 3] = Math.min(255, intensity + 100); // A
+    } else {
+      // Gray out matching pixels
+      const gray = Math.round((r1 + g1 + b1) / 3 * 0.3);
+      diffImage[offset] = gray;
+      diffImage[offset + 1] = gray;
+      diffImage[offset + 2] = gray;
+      diffImage[offset + 3] = 80;
+    }
+  }
+
+  // Find connected diff regions (simple bounding box approach)
+  const diffRegions = findDiffRegions(diffMask, width, height);
+
+  return {
+    totalPixels,
+    diffPixels,
+    diffPercent: Math.round((diffPixels / totalPixels) * 10000) / 100,
+    maxDiff: Math.round(maxDiff * 100) / 100,
+    diffImage,
+    diffRegions,
+  };
+}
+
+/**
+ * Find bounding boxes of diff regions using simple flood-fill-like scan.
+ */
+function findDiffRegions(
+  mask: Uint8Array,
+  width: number,
+  height: number,
+): Array<{x: number; y: number; w: number; h: number; severity: string}> {
+  const visited = new Uint8Array(mask.length);
+  const regions: Array<{x: number; y: number; w: number; h: number; severity: string}> = [];
+
+  // Simple scanline approach: find bounding boxes of connected diff regions
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x;
+      if (mask[idx] && !visited[idx]) {
+        // BFS to find connected component
+        const queue = [idx];
+        visited[idx] = 1;
+        let minX = x, maxX = x, minY = y, maxY = y;
+        let count = 0;
+
+        while (queue.length > 0) {
+          const cur = queue.shift()!;
+          const cx = cur % width;
+          const cy = Math.floor(cur / width);
+          count++;
+          minX = Math.min(minX, cx);
+          maxX = Math.max(maxX, cx);
+          minY = Math.min(minY, cy);
+          maxY = Math.max(maxY, cy);
+
+          // 4-connected neighbors
+          for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+            const nx = cx + dx;
+            const ny = cy + dy;
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+              const ni = ny * width + nx;
+              if (mask[ni] && !visited[ni]) {
+                visited[ni] = 1;
+                queue.push(ni);
+              }
+            }
+          }
+        }
+
+        const regionW = maxX - minX + 1;
+        const regionH = maxY - minY + 1;
+        const area = regionW * regionH;
+        let severity = 'minor';
+        if (area > 10000) severity = 'major';
+        else if (area > 1000) severity = 'moderate';
+
+        regions.push({x: minX, y: minY, w: regionW, h: regionH, severity});
+      }
+    }
+  }
+
+  return regions;
+}
+
+// ─── screenshot_diff ────────────────────────────────────────────────────────
+export const screenshotDiff = definePageTool({
+  name: 'screenshot_diff',
+  description:
+    'Compare the current viewport screenshot against a baseline image file. ' +
+    'Returns pixel-level diff statistics including diff percentage, max color distance, ' +
+    'and bounding boxes of changed regions. Optionally saves a diff visualization image. ' +
+    'Useful for automated game UI regression testing and animation frame comparison.',
+  annotations: {
+    category: ToolCategory.DEBUGGING,
+    readOnlyHint: false,
+  },
+  schema: {
+    baselinePath: zod
+      .string()
+      .describe(
+        'Path to the baseline (reference) image file to compare against.',
+      ),
+    tolerance: zod
+      .number()
+      .min(0)
+      .max(765)
+      .default(30)
+      .describe(
+        'Per-pixel color distance tolerance (Euclidean in RGB space, 0-765). ' +
+        '0 = exact match, 30 = slight anti-aliasing allowed, 100 = aggressive tolerance for animations. Default 30.',
+      ),
+    alphaTolerance: zod
+      .number()
+      .min(0)
+      .max(255)
+      .default(50)
+      .describe(
+        'Alpha channel tolerance (0-255). Useful when compositing causes alpha differences. Default 50.',
+      ),
+    saveDiffTo: zod
+      .string()
+      .optional()
+      .describe(
+        'Path to save the diff visualization image (PNG). Red pixels show differences, gray pixels show matches.',
+      ),
+    maxRegions: zod
+      .number()
+      .int()
+      .min(1)
+      .max(20)
+      .default(5)
+      .describe('Maximum number of diff regions to report. Default 5.'),
+  },
+  blockedByDialog: true,
+  verifyFilesSchema: ['baselinePath', 'saveDiffTo'],
+  handler: async (request, response, context) => {
+    const {baselinePath, tolerance, alphaTolerance, saveDiffTo, maxRegions} =
+      request.params;
+
+    // 1. Read baseline image
+    let baselineData: Buffer;
+    try {
+      baselineData = await fs.readFile(baselinePath);
+    } catch {
+      throw new Error(`Baseline image not found: ${baselinePath}`);
+    }
+
+    // 2. Take current screenshot as PNG buffer
+    const currentData = await request.page.pptrPage.screenshot({
+      type: 'png',
+      optimizeForSpeed: false,
+    });
+
+    // 3. Decode both images to RGBA using the page's Canvas API (browser-side)
+    const page = request.page.pptrPage;
+    const comparison = await page.evaluate(
+      `
+      (baselineB64, currentB64) => {
+        return new Promise((resolve) => {
+          const baselineBytes = Uint8Array.from(atob(baselineB64), c => c.charCodeAt(0));
+          const currentBytes = Uint8Array.from(atob(currentB64), c => c.charCodeAt(0));
+
+          const img1 = new Image();
+          const img2 = new Image();
+          let loaded = 0;
+
+          function onLoad() {
+            loaded++;
+            if (loaded < 2) return;
+
+            // Use dimensions from current screenshot
+            const w = img2.width;
+            const h = img2.height;
+
+            const canvas1 = document.createElement('canvas');
+            canvas1.width = w;
+            canvas1.height = h;
+            const ctx1 = canvas1.getContext('2d');
+            ctx1.drawImage(img1, 0, 0, w, h);
+            const data1 = ctx1.getImageData(0, 0, w, h).data;
+
+            const canvas2 = document.createElement('canvas');
+            canvas2.width = w;
+            canvas2.height = h;
+            const ctx2 = canvas2.getContext('2d');
+            ctx2.drawImage(img2, 0, 0, w, h);
+            const data2 = ctx2.getImageData(0, 0, w, h).data;
+
+            resolve({
+              width: w,
+              height: h,
+              baseline: Array.from(data1),
+              current: Array.from(data2),
+            });
+          }
+
+          img1.onload = onLoad;
+          img2.onload = onLoad;
+          img1.src = 'data:image/png;base64,' + b64decode(baselineBytes);
+          img2.src = 'data:image/png;base64,' + b64decode(currentBytes);
+        });
+      }
+      `.replace('b64decode', (() => {
+        // Inline base64 encoding helper
+        return `(bytes) => {
+          let binary = '';
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return binary;
+        }`;
+      })()),
+      Buffer.from(baselineData).toString('base64'),
+      Buffer.from(currentData).toString('base64'),
+    );
+
+    if (typeof comparison === 'string') {
+      response.appendResponseLine(comparison);
+      return;
+    }
+
+    const {width, height, baseline: bArr, current: cArr} = comparison as {
+      width: number;
+      height: number;
+      baseline: number[];
+      current: number[];
+    };
+
+    // 4. Run pixel comparison in Node.js (faster for large images)
+    const baselineBuf = Buffer.from(bArr);
+    const currentBuf = Buffer.from(cArr);
+
+    const result = comparePixels(
+      baselineBuf,
+      currentBuf,
+      width,
+      height,
+      tolerance,
+      alphaTolerance,
+    );
+
+    // 5. Output results
+    response.appendResponseLine(
+      `Image size: ${width}×${height} (${result.totalPixels} pixels)`,
+    );
+    response.appendResponseLine(
+      `Diff: ${result.diffPixels} pixels (${result.diffPercent}%)`,
+    );
+    response.appendResponseLine(`Max color distance: ${result.maxDiff}`);
+
+    if (result.diffRegions.length > 0) {
+      const regions = result.diffRegions.slice(0, maxRegions);
+      response.appendResponseLine(
+        `Diff regions (${regions.length}${result.diffRegions.length > maxRegions ? ` of ${result.diffRegions.length}` : ''}):`,
+      );
+      for (const r of regions) {
+        response.appendResponseLine(
+          `  [${r.severity}] (${r.x},${r.y}) ${r.w}×${r.h}`,
+        );
+      }
+    } else {
+      response.appendResponseLine('No diff regions found — images match!');
+    }
+
+    // 6. Save diff image if requested
+    if (saveDiffTo) {
+      // Encode diff image as PNG via the page's canvas
+      const diffB64 = await page.evaluate(
+        `
+        (rgbaData, w, h) => {
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          const imageData = ctx.createImageData(w, h);
+          imageData.data.set(new Uint8ClampedArray(rgbaData));
+          ctx.putImageData(imageData, 0, 0);
+          return canvas.toDataURL('image/png').split(',')[1];
+        }
+        `,
+        Array.from(result.diffImage),
+        width,
+        height,
+      );
+
+      if (typeof diffB64 === 'string') {
+        const diffBuf = Buffer.from(diffB64, 'base64');
+        const {filename} = await context.saveFile(
+          diffBuf,
+          saveDiffTo,
+          '.png',
+        );
+        response.appendResponseLine(`Diff image saved to ${filename}`);
+      }
+    }
+  },
+});

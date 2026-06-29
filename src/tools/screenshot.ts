@@ -98,7 +98,7 @@ export const screenshot = definePageTool(args => {
         .enum(['png', 'jpeg', 'webp'])
         .default(defaultFormat)
         .describe(
-          `Type of format to save the screenshot as. Default is "${defaultFormat}"`,
+          `Type of format to save the screenshot as. Default is "${defaultFormat}". Use "jpeg" or "webp" with quality for smaller files.`,
         ),
       quality: zod
         .number()
@@ -106,7 +106,23 @@ export const screenshot = definePageTool(args => {
         .max(100)
         .optional()
         .describe(
-          'Compression quality for JPEG and WebP formats (0-100). Higher values mean better quality but larger file sizes. Ignored for PNG format.',
+          'Compression quality for JPEG and WebP formats (0-100). Higher values mean better quality but larger file sizes. Ignored for PNG format. Recommended: 80 for JPEG, 85 for WebP.',
+        ),
+      maxWidth: zod
+        .number()
+        .int()
+        .min(100)
+        .optional()
+        .describe(
+          'Maximum width in pixels. The screenshot will be downscaled to fit within this width while preserving aspect ratio. Useful for reducing file size.',
+        ),
+      maxHeight: zod
+        .number()
+        .int()
+        .min(100)
+        .optional()
+        .describe(
+          'Maximum height in pixels. The screenshot will be downscaled to fit within this height while preserving aspect ratio.',
         ),
       uid: zod
         .string()
@@ -146,21 +162,21 @@ export const screenshot = definePageTool(args => {
           : (request.params.quality ?? screenshotQuality);
       const fullPage = request.params.fullPage ?? false;
 
-      // Compute a downscale clip when --screenshot-max-width or
-      // --screenshot-max-height is set and the source exceeds either bound.
-      // The smaller scale factor wins so both bounds are respected while
-      // preserving aspect ratio.
+      // Compute a downscale clip when maxWidth/maxHeight is set (per-call or CLI-level)
+      // and the source exceeds either bound. Per-call params take precedence.
+      const effectiveMaxWidth = request.params.maxWidth ?? screenshotMaxWidth;
+      const effectiveMaxHeight = request.params.maxHeight ?? screenshotMaxHeight;
       let clip: ScreenshotClip | undefined;
       if (
-        screenshotMaxWidth !== undefined ||
-        screenshotMaxHeight !== undefined
+        effectiveMaxWidth !== undefined ||
+        effectiveMaxHeight !== undefined
       ) {
         const box = await getSourceBox(page, element, fullPage);
         if (box) {
           clip = computeDownscaleClip(
             box,
-            screenshotMaxWidth,
-            screenshotMaxHeight,
+            effectiveMaxWidth,
+            effectiveMaxHeight,
           );
         }
       }

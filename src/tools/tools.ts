@@ -7,8 +7,10 @@
 import type {ParsedArguments} from '../bin/chrome-devtools-mcp-cli-options.js';
 
 import * as consoleTools from './console.js';
+import * as consoleSearchTools from './consoleSearch.js';
 import * as emulationTools from './emulation.js';
 import * as extensionTools from './extensions.js';
+import * as gameTools from './game.js';
 import * as inputTools from './input.js';
 import * as lighthouseTools from './lighthouse.js';
 import * as memoryTools from './memory.js';
@@ -17,20 +19,24 @@ import * as pagesTools from './pages.js';
 import * as performanceTools from './performance.js';
 import * as screencastTools from './screencast.js';
 import * as screenshotTools from './screenshot.js';
+import * as screenshotDiffTools from './screenshotDiff.js';
 import * as scriptTools from './script.js';
 import * as slimTools from './slim/tools.js';
 import * as snapshotTools from './snapshot.js';
 import * as thirdPartyDeveloperTools from './thirdPartyDeveloper.js';
 import type {ToolDefinition} from './ToolDefinition.js';
 import * as webmcpTools from './webmcp.js';
+import * as websocketTools from './websocket.js';
 
 export const createTools = (args: ParsedArguments) => {
   const rawTools = args.slim
     ? Object.values(slimTools)
     : [
         ...Object.values(consoleTools),
+        ...Object.values(consoleSearchTools),
         ...Object.values(emulationTools),
         ...Object.values(extensionTools),
+        ...Object.values(gameTools),
         ...Object.values(inputTools),
         ...Object.values(lighthouseTools),
         ...Object.values(memoryTools),
@@ -39,10 +45,12 @@ export const createTools = (args: ParsedArguments) => {
         ...Object.values(performanceTools),
         ...Object.values(screencastTools),
         ...Object.values(screenshotTools),
+        ...Object.values(screenshotDiffTools),
         ...Object.values(scriptTools),
         ...Object.values(snapshotTools),
         ...Object.values(thirdPartyDeveloperTools),
         ...Object.values(webmcpTools),
+        ...Object.values(websocketTools),
       ];
 
   const tools = [];
