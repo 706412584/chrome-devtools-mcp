@@ -9,9 +9,9 @@
  */
 
 import fs from 'node:fs/promises';
+import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import net from 'node:net';
 
 import {zod} from '../third_party/index.js';
 
@@ -212,14 +212,6 @@ export const browserDiscover = defineTool({
             const profilePath = path.join(baseDir, entry);
             const stat = await fs.stat(profilePath);
             if (stat.isDirectory()) {
-              // Check if this profile has cookies (indicates logged-in sessions)
-              const hasCookies = await fileExists(
-                path.join(profilePath, 'Cookies'),
-              ).catch(() => false);
-              const hasLoginData = await fileExists(
-                path.join(profilePath, 'Login Data'),
-              ).catch(() => false);
-
               instances.push({
                 source: `System profile (${baseDir.split(path.sep).slice(-2).join('/')})`,
                 userDataDir: baseDir,
@@ -251,10 +243,18 @@ export const browserDiscover = defineTool({
       const inst = instances[i];
       const status = inst.port ? `[RUNNING :${inst.port}]` : '[NOT RUNNING]';
       response.appendResponseLine(`${i + 1}. ${status} ${inst.source}`);
-      if (inst.browserVersion) response.appendResponseLine(`   Version: ${inst.browserVersion}`);
-      if (inst.userDataDir) response.appendResponseLine(`   userDataDir: ${inst.userDataDir}`);
-      if (inst.activeProfile) response.appendResponseLine(`   Profile: ${inst.activeProfile}`);
-      if (inst.wsEndpoint) response.appendResponseLine(`   wsEndpoint: ${inst.wsEndpoint}`);
+      if (inst.browserVersion) {
+        response.appendResponseLine(`   Version: ${inst.browserVersion}`);
+      }
+      if (inst.userDataDir) {
+        response.appendResponseLine(`   userDataDir: ${inst.userDataDir}`);
+      }
+      if (inst.activeProfile) {
+        response.appendResponseLine(`   Profile: ${inst.activeProfile}`);
+      }
+      if (inst.wsEndpoint) {
+        response.appendResponseLine(`   wsEndpoint: ${inst.wsEndpoint}`);
+      }
       response.appendResponseLine(`   Persistent: ${inst.persistent ? 'Yes (session saved)' : 'No'}`);
       response.appendResponseLine('');
     }

@@ -115,13 +115,11 @@ function findDiffRegions(
         const queue = [idx];
         visited[idx] = 1;
         let minX = x, maxX = x, minY = y, maxY = y;
-        let count = 0;
 
         while (queue.length > 0) {
           const cur = queue.shift()!;
           const cx = cur % width;
           const cy = Math.floor(cur / width);
-          count++;
           minX = Math.min(minX, cx);
           maxX = Math.max(maxX, cx);
           minY = Math.min(minY, cy);
@@ -145,8 +143,11 @@ function findDiffRegions(
         const regionH = maxY - minY + 1;
         const area = regionW * regionH;
         let severity = 'minor';
-        if (area > 10000) severity = 'major';
-        else if (area > 1000) severity = 'moderate';
+        if (area > 10000) {
+          severity = 'major';
+        } else if (area > 1000) {
+          severity = 'moderate';
+        }
 
         regions.push({x: minX, y: minY, w: regionW, h: regionH, severity});
       }

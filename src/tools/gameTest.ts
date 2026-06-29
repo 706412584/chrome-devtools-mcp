@@ -72,7 +72,8 @@ interface StepResult {
 
 async function runStep(
   step: TestStep,
-  page: import('../third_party/index.js').Page,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  page: any,
   baselineDir: string,
 ): Promise<StepResult> {
   const start = Date.now();
@@ -82,7 +83,9 @@ async function runStep(
     switch (action) {
       case 'navigate': {
         const url = params.url as string;
-        if (!url) throw new Error('navigate requires url');
+        if (!url) {
+          throw new Error('navigate requires url');
+        }
         await page.goto(url, {waitUntil: 'networkidle2', timeout: 15000});
         return {
           step: action,
@@ -105,7 +108,9 @@ async function runStep(
 
       case 'wait_for': {
         const text = params.text as string;
-        if (!text) throw new Error('wait_for requires text');
+        if (!text) {
+          throw new Error('wait_for requires text');
+        }
         await page.waitForFunction(
           (t: string) => document.body?.innerText.includes(t),
           {timeout: (params.timeout as number) ?? 10000},
@@ -137,7 +142,6 @@ async function runStep(
       }
 
       case 'click': {
-        const uid = params.uid as string;
         const x = params.x as number | undefined;
         const y = params.y as number | undefined;
         if (x !== undefined && y !== undefined) {
@@ -157,7 +161,6 @@ async function runStep(
         const name = (params.name as string) ?? `step-${Date.now()}`;
         const format = (params.format as 'png' | 'jpeg' | 'webp') ?? 'png';
         const quality = params.quality as number | undefined;
-        const maxWidth = params.maxWidth as number | undefined;
         const baseline = params.baseline as string | undefined;
 
         const screenshotData = await page.screenshot({
@@ -243,7 +246,9 @@ async function runStep(
 
       case 'eval': {
         const fn = params.function as string;
-        if (!fn) throw new Error('eval requires function');
+        if (!fn) {
+          throw new Error('eval requires function');
+        }
         const result = await page.evaluate(`(${fn})`);
         return {
           step: action,
@@ -317,38 +322,11 @@ export const gameTest = definePageTool({
   },
   schema: {
     steps: zod
-      .array(
-        zod.object({
-          action: zod.enum([
-            'navigate',
-            'wait',
-            'wait_for',
-            'wait_for_canvas',
-            'click',
-            'screenshot',
-            'eval',
-            'assert_text',
-            'assert_no_errors',
-          ]),
-          url: zod.string().optional(),
-          name: zod.string().optional(),
-          text: zod.string().optional(),
-          function: zod.string().optional(),
-          present: zod.boolean().optional(),
-          x: zod.number().optional(),
-          y: zod.number().optional(),
-          uid: zod.string().optional(),
-          timeMs: zod.number().optional(),
-          timeout: zod.number().optional(),
-          format: zod.enum(['png', 'jpeg', 'webp']).optional(),
-          quality: zod.number().optional(),
-          maxWidth: zod.number().optional(),
-          baseline: zod.string().optional(),
-          tolerance: zod.number().optional(),
-          threshold: zod.number().optional(),
-        }),
-      )
-      .describe('Array of test steps to execute sequentially.'),
+      .string()
+      .describe(
+        'JSON array of test steps. Each step: {action, url?, name?, text?, function?, present?, x?, y?, timeMs?, timeout?, format?, quality?, baseline?, tolerance?, threshold?}. ' +
+        'Actions: navigate, wait, wait_for, wait_for_canvas, click, screenshot, eval, assert_text, assert_no_errors.',
+      ),
     baselineDir: zod
       .string()
       .optional()
@@ -359,8 +337,15 @@ export const gameTest = definePageTool({
   blockedByDialog: true,
   verifyFilesSchema: ['baselineDir'],
   handler: async (request, response) => {
-    const {steps, baselineDir: rawBaselineDir} = request.params;
+    const {steps: stepsJson, baselineDir: rawBaselineDir} = request.params;
     const baselineDir = rawBaselineDir ?? path.join(process.cwd(), 'test-baselines');
+
+    let steps: TestStep[];
+    try {
+      steps = JSON.parse(stepsJson as string);
+    } catch {
+      throw new Error('Invalid JSON in steps parameter');
+    }
 
     // Ensure baseline directory exists
     await fs.mkdir(baselineDir, {recursive: true});

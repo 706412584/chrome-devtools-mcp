@@ -22,7 +22,9 @@ function addEvent(pageId: string, event: Record<string, unknown>) {
   const arr = wsEvents.get(pageId) ?? [];
   arr.push({...event, timestamp: Date.now()});
   // Keep last 500 events
-  if (arr.length > 500) arr.splice(0, arr.length - 500);
+  if (arr.length > 500) {
+    arr.splice(0, arr.length - 500);
+  }
   wsEvents.set(pageId, arr);
 }
 
@@ -194,10 +196,18 @@ export const websocketMonitorGet = definePageTool({
     for (const evt of events) {
       const time = new Date(evt.timestamp as number).toISOString().substring(11, 23);
       let detail = '';
-      if (evt.url) detail += ` → ${evt.url}`;
-      if (evt.data) detail += ` [${evt.length}B]: ${evt.data}`;
-      if (evt.error) detail += ` ERROR: ${evt.error}`;
-      if (evt.requestId) detail += ` (req: ${String(evt.requestId).substring(0, 8)})`;
+      if (evt.url) {
+        detail += ` → ${evt.url}`;
+      }
+      if (evt.data) {
+        detail += ` [${evt.length}B]: ${evt.data}`;
+      }
+      if (evt.error) {
+        detail += ` ERROR: ${evt.error}`;
+      }
+      if (evt.requestId) {
+        detail += ` (req: ${String(evt.requestId).substring(0, 8)})`;
+      }
       response.appendResponseLine(`[${time}] ${evt.type}${detail}`);
     }
   },

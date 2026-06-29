@@ -243,14 +243,14 @@ const ASSET_MONITOR_INSTALL = `
 })()
 `;
 
-const ASSET_MONITOR_QUERY = (filter: string | null, maxResults: number, sinceMs: number | null) => `
+const ASSET_MONITOR_QUERY = (filter: string | null, maxResults: number, _sinceMs: number | null) => `
 (() => {
   const entries = window.__mcp_asset_monitor__ || [];
   const now = Date.now();
   let filtered = entries;
 
-  if (sinceMs && sinceMs > 0) {
-    filtered = filtered.filter(e => e.timestamp >= now - sinceMs);
+  if (_sinceMs && _sinceMs > 0) {
+    filtered = filtered.filter(e => e.timestamp >= now - _sinceMs);
   }
 
   if (${JSON.stringify(filter)}) {
