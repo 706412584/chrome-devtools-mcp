@@ -216,7 +216,7 @@ const ASSET_MONITOR_INSTALL = `
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'resource') {
-            const r = entry as PerformanceResourceTiming;
+            const r = entry;
             const ext = r.name.split('?')[0].split('.').pop()?.toLowerCase() || '';
             // Only track asset types relevant to games
             if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'mp3', 'ogg', 'wav',
@@ -253,8 +253,8 @@ const ASSET_MONITOR_QUERY = (
   const now = Date.now();
   let filtered = entries;
 
-  if (_sinceMs && _sinceMs > 0) {
-    filtered = filtered.filter(e => e.timestamp >= now - _sinceMs);
+  if (${_sinceMs} && ${_sinceMs} > 0) {
+    filtered = filtered.filter(e => e.timestamp >= now - ${_sinceMs});
   }
 
   if (${JSON.stringify(filter)}) {
