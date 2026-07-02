@@ -6,6 +6,7 @@
 
 import {isUtf8} from 'node:buffer';
 
+import {logger} from '../logger.js';
 import {
   DevTools,
   type HTTPRequest,
@@ -79,8 +80,11 @@ export class NetworkFormatter {
       try {
         data =
           this.#request.postData() ?? (await this.#request.fetchPostData());
-      } catch {
-        // Ignore parsing errors
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger?.(
+          `Failed to fetch post data for ${this.#request.url()}: ${msg}`,
+        );
       }
       const requestBodyNotAvailableMessage =
         '<Request body not available anymore>';
@@ -127,8 +131,11 @@ export class NetworkFormatter {
             '.network-response',
           );
           this.#responseBodyFilePath = result.filename;
-        } catch {
-          // Flatten error handling for buffer() failure and save failure
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          logger?.(
+            `Failed to save response body for ${this.#request.url()}: ${msg}`,
+          );
         }
 
         if (!this.#responseBodyFilePath) {

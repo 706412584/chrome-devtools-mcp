@@ -183,7 +183,10 @@ export class WaitForHelper {
       // the correct context
       await this.waitForStableDom();
     } catch (error) {
-      logger?.(error);
+      logger?.(
+        'Post-action navigation/DOM stability wait failed (non-fatal):',
+        error,
+      );
     } finally {
       this.#abortController.abort();
     }

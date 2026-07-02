@@ -91,7 +91,8 @@ export const evaluate = definePageTool({
       const result = await page.pptrPage.evaluate(request.params.script);
       response.appendResponseLine(JSON.stringify(result));
     } catch (err) {
-      response.appendResponseLine(String(err.message));
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(`Script evaluation failed: ${msg}`);
     }
   },
 });

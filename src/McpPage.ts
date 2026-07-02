@@ -421,7 +421,8 @@ export class McpPage implements ContextPage {
       );
       return {cdpBackendNodeId, cdpRequestId};
     } catch (err) {
-      logger?.('error getting devtools data', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      logger?.(`Failed to get DevTools UI data (returning empty): ${msg}`, err);
     }
     return {};
   }
