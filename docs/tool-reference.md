@@ -85,13 +85,15 @@
 
 ### `click`
 
-**Description:** Clicks on the provided element
+**Description:** Clicks on the provided element. For cross-origin iframes (e.g., game canvases), automatically falls back to CDP Input.dispatchMouseEvent which penetrates iframe boundaries. Use offsetX/offsetY to [`click`](#click) at a specific position within the element (e.g., a button inside a canvas). Coordinates are relative to the element's top-left corner.
 
 **Parameters:**
 
 - **uid** (string) **(required)**: The uid of an element on the page from the page content snapshot
 - **dblClick** (boolean) _(optional)_: Set to true for double clicks. Default is false.
 - **includeSnapshot** (boolean) _(optional)_: Whether to include a snapshot in the response. Default is false.
+- **offsetX** (number) _(optional)_: Horizontal offset from the element's top-left corner in CSS pixels. When provided with offsetY, clicks at this position instead of center. Useful for clicking buttons inside canvas elements.
+- **offsetY** (number) _(optional)_: Vertical offset from the element's top-left corner in CSS pixels. When provided with offsetX, clicks at this position instead of center. Useful for clicking buttons inside canvas elements.
 
 ---
 
@@ -527,12 +529,12 @@ so returned values have to be JSON-serializable.
 **Parameters:**
 
 - **function** (string) **(required)**: A JavaScript function declaration to be executed by the tool in the currently selected page.
-  Example without arguments: `() => {
+Example without arguments: `() => {
   return document.title
 }` or `async () => {
   return await fetch("example.com")
 }`.
-  Example with arguments: `(el) => {
+Example with arguments: `(el) => {
   return el.innerText;
 }`
 
@@ -548,7 +550,7 @@ so returned values have to be JSON-serializable.
 
 **Parameters:**
 
-- **function** (string) _(optional)_: Custom JavaScript function to evaluate. Must return a JSON-serializable value. Example: "() => window.\_\_gameState"
+- **function** (string) _(optional)_: Custom JavaScript function to evaluate. Must return a JSON-serializable value. Example: "() => window.__gameState"
 - **preset** (enum: "screen", "dom", "console", "performance") _(optional)_: Built-in query preset. If provided, "function" is ignored.
 - **pretty** (boolean) _(optional)_: Pretty-print the JSON output. Default true.
 
@@ -840,12 +842,12 @@ in the DevTools Elements panel (if any).
 ### `list_3p_developer_tools`
 
 **Description:** Lists all third-party developer tools the page exposes for providing runtime information.
-Third-party developer tools can be called via the '[`execute_3p_developer_tool`](#execute_3p_developer_tool)()' MCP tool.
-Alternatively, third-party developer tools can be executed by calling '[`evaluate_script`](#evaluate_script)' and adding the
-following command to the script:
-'window.\_\_dtmcp.executeTool(toolName, params)'
-This might be helpful when the third-party developer tools return non-serializable values or when composing
-third-party developer tools with additional functionality. (requires flag: --categoryExperimentalThirdParty=true)
+  Third-party developer tools can be called via the '[`execute_3p_developer_tool`](#execute_3p_developer_tool)()' MCP tool.
+  Alternatively, third-party developer tools can be executed by calling '[`evaluate_script`](#evaluate_script)' and adding the
+  following command to the script:
+  'window.__dtmcp.executeTool(toolName, params)'
+  This might be helpful when the third-party developer tools return non-serializable values or when composing
+  third-party developer tools with additional functionality. (requires flag: --categoryExperimentalThirdParty=true)
 
 **Parameters:** None
 
