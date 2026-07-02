@@ -85,13 +85,15 @@
 
 ### `click`
 
-**Description:** Clicks on the provided element
+**Description:** Clicks on the provided element. For cross-origin iframes (e.g., game canvases), automatically falls back to CDP Input.dispatchMouseEvent which penetrates iframe boundaries. Use offsetX/offsetY to [`click`](#click) at a specific position within the element (e.g., a button inside a canvas). Coordinates are relative to the element's top-left corner.
 
 **Parameters:**
 
 - **uid** (string) **(required)**: The uid of an element on the page from the page content snapshot
 - **dblClick** (boolean) _(optional)_: Set to true for double clicks. Default is false.
 - **includeSnapshot** (boolean) _(optional)_: Whether to include a snapshot in the response. Default is false.
+- **offsetX** (number) _(optional)_: Horizontal offset from the element's top-left corner in CSS pixels. When provided with offsetY, clicks at this position instead of center. Useful for clicking buttons inside canvas elements.
+- **offsetY** (number) _(optional)_: Vertical offset from the element's top-left corner in CSS pixels. When provided with offsetX, clicks at this position instead of center. Useful for clicking buttons inside canvas elements.
 
 ---
 

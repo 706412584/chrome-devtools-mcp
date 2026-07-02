@@ -8,6 +8,7 @@
  */
 
 import {zod} from '../third_party/index.js';
+import {formatTimestamp} from '../utils/format.js';
 
 import {ToolCategory} from './categories.js';
 import {definePageTool} from './ToolDefinition.js';
@@ -241,7 +242,7 @@ export const consoleSearch = definePageTool({
     );
 
     for (const msg of data.messages) {
-      const time = new Date(msg.time).toISOString().substring(11, 23);
+      const time = formatTimestamp(msg.time);
       response.appendResponseLine(`[${time}] [${msg.type}] ${msg.text}`);
     }
   },
@@ -284,7 +285,7 @@ export const consoleStats = definePageTool({
     if (data.oldest && data.newest) {
       const duration = ((data.newest - data.oldest) / 1000).toFixed(1);
       response.appendResponseLine(
-        `Time span: ${duration}s (${new Date(data.oldest).toISOString().substring(11, 23)} → ${new Date(data.newest).toISOString().substring(11, 23)})`,
+        `Time span: ${duration}s (${formatTimestamp(data.oldest)} → ${formatTimestamp(data.newest)})`,
       );
     }
   },

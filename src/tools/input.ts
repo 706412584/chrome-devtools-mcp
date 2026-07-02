@@ -9,7 +9,7 @@ import type {McpContext} from '../McpContext.js';
 import {zod} from '../third_party/index.js';
 import type {ElementHandle, KeyInput} from '../third_party/index.js';
 import type {TextSnapshotNode} from '../types.js';
-import {parseKey} from '../utils/keyboard.js';
+import {pressKeyCombo} from '../utils/key-press.js';
 import type {WaitForEventsResult} from '../WaitForHelper.js';
 
 import {ToolCategory} from './categories.js';
@@ -107,7 +107,7 @@ export const click = definePageTool({
       .number()
       .optional()
       .describe(
-        'Horizontal offset from the element\'s top-left corner in CSS pixels. ' +
+        "Horizontal offset from the element's top-left corner in CSS pixels. " +
           'When provided with offsetY, clicks at this position instead of center. ' +
           'Useful for clicking buttons inside canvas elements.',
       ),
@@ -115,7 +115,7 @@ export const click = definePageTool({
       .number()
       .optional()
       .describe(
-        'Vertical offset from the element\'s top-left corner in CSS pixels. ' +
+        "Vertical offset from the element's top-left corner in CSS pixels. " +
           'When provided with offsetX, clicks at this position instead of center. ' +
           'Useful for clicking buttons inside canvas elements.',
       ),
@@ -179,9 +179,7 @@ export const click = definePageTool({
           }
         }
       });
-      const posStr = hasOffset
-        ? ` at offset (${offsetX}, ${offsetY})`
-        : '';
+      const posStr = hasOffset ? ` at offset (${offsetX}, ${offsetY})` : '';
       response.appendResponseLine(
         request.params.dblClick
           ? `Successfully double clicked on the element${posStr}`
@@ -581,17 +579,9 @@ export const pressKey = definePageTool({
   verifyFilesSchema: [],
   handler: async (request, response) => {
     const page = request.page;
-    const tokens = parseKey(request.params.key);
-    const [key, ...modifiers] = tokens;
 
     const result = await page.waitForEventsAfterAction(async () => {
-      for (const modifier of modifiers) {
-        await page.pptrPage.keyboard.down(modifier);
-      }
-      await page.pptrPage.keyboard.press(key);
-      for (const modifier of modifiers.toReversed()) {
-        await page.pptrPage.keyboard.up(modifier);
-      }
+      await pressKeyCombo(page.pptrPage, request.params.key);
     });
 
     response.appendResponseLine(
@@ -658,16 +648,7 @@ export const keyboardSequence = definePageTool({
 
     const result = await page.waitForEventsAfterAction(async () => {
       for (let i = 0; i < keys.length; i++) {
-        const tokens = parseKey(keys[i]);
-        const [key, ...modifiers] = tokens;
-
-        for (const modifier of modifiers) {
-          await page.pptrPage.keyboard.down(modifier);
-        }
-        await page.pptrPage.keyboard.press(key);
-        for (const modifier of modifiers.toReversed()) {
-          await page.pptrPage.keyboard.up(modifier);
-        }
+        await pressKeyCombo(page.pptrPage, keys[i]);
 
         if (delayMs && delayMs > 0 && i < keys.length - 1) {
           await new Promise(resolve => setTimeout(resolve, delayMs));

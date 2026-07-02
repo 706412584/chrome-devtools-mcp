@@ -14,20 +14,12 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {zod} from '../third_party/index.js';
+import {fileExists} from '../utils/files.js';
 
 import {ToolCategory} from './categories.js';
 import {defineTool} from './ToolDefinition.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function fileExists(p: string): Promise<boolean> {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 async function readDevToolsActivePort(
   userDataDir: string,

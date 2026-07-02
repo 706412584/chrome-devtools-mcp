@@ -7,6 +7,7 @@
  */
 
 import {zod} from '../third_party/index.js';
+import {appendJsonBlock} from '../utils/format.js';
 
 import {ToolCategory} from './categories.js';
 import {definePageTool} from './ToolDefinition.js';
@@ -132,9 +133,7 @@ export const gameStats = definePageTool({
         );
       }
 
-      response.appendResponseLine('```json');
-      response.appendResponseLine(JSON.stringify(stats, null, 2));
-      response.appendResponseLine('```');
+      appendJsonBlock(response, stats);
     }
   },
 });

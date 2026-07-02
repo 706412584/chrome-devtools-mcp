@@ -8,6 +8,7 @@
  */
 
 import {zod} from '../third_party/index.js';
+import {formatTimestamp} from '../utils/format.js';
 
 import {ToolCategory} from './categories.js';
 import {definePageTool} from './ToolDefinition.js';
@@ -198,9 +199,7 @@ export const websocketMonitorGet = definePageTool({
     );
 
     for (const evt of events) {
-      const time = new Date(evt.timestamp as number)
-        .toISOString()
-        .substring(11, 23);
+      const time = formatTimestamp(evt.timestamp as number);
       let detail = '';
       if (evt.url) {
         detail += ` → ${evt.url}`;

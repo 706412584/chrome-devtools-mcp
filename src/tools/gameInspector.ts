@@ -8,6 +8,7 @@
  */
 
 import {zod} from '../third_party/index.js';
+import {appendJsonBlock} from '../utils/format.js';
 
 import {ToolCategory} from './categories.js';
 import {definePageTool} from './ToolDefinition.js';
@@ -121,9 +122,7 @@ export const gameState = definePageTool({
       : JSON.stringify(result);
 
     response.appendResponseLine(`Query: ${preset ?? 'custom'}`);
-    response.appendResponseLine('```json');
-    response.appendResponseLine(formatted);
-    response.appendResponseLine('```');
+    appendJsonBlock(response, formatted);
   },
 });
 
