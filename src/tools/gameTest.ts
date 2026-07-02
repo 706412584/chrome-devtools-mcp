@@ -86,6 +86,24 @@ async function runStep(
         if (!url) {
           throw new Error('navigate requires url');
         }
+        // Validate URL scheme to prevent local file access
+        let parsed: URL;
+        try {
+          parsed = new URL(url);
+        } catch {
+          throw new Error(
+            `Invalid URL: ${url}. Must be an absolute URL with a valid scheme.`,
+          );
+        }
+        if (
+          parsed.protocol !== 'http:' &&
+          parsed.protocol !== 'https:' &&
+          parsed.protocol !== 'about:'
+        ) {
+          throw new Error(
+            `Blocked navigation to ${parsed.protocol} URL. Only http:, https:, and about: are allowed.`,
+          );
+        }
         await page.goto(url, {waitUntil: 'networkidle2', timeout: 15000});
         return {
           step: action,

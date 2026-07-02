@@ -226,7 +226,17 @@ async function startSocketServer() {
       const transport = new PipeTransport(socket, socket);
       transport.onmessage = async (message: string) => {
         logger?.('onmessage', message);
-        const response = await handleRequest(JSON.parse(message));
+        let parsed: DaemonMessage;
+        try {
+          parsed = JSON.parse(message) as DaemonMessage;
+        } catch {
+          transport.send(
+            JSON.stringify({success: false, error: 'Invalid JSON message'}),
+          );
+          socket.end();
+          return;
+        }
+        const response = await handleRequest(parsed);
         transport.send(JSON.stringify(response));
         socket.end();
       };
