@@ -11,50 +11,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import {zod} from '../third_party/index.js';
+import {comparePixelBuffers} from '../utils/pixel-comparison.js';
 
 import {ToolCategory} from './categories.js';
 import {definePageTool} from './ToolDefinition.js';
-
-// ─── Pixel comparison (inline, no external deps) ────────────────────────────
-
-interface DiffResult {
-  totalPixels: number;
-  diffPixels: number;
-  diffPercent: number;
-  maxDiff: number;
-}
-
-function comparePixels(
-  baseline: Buffer,
-  current: Buffer,
-  width: number,
-  height: number,
-  tolerance: number,
-): DiffResult {
-  const totalPixels = width * height;
-  let diffPixels = 0;
-  let maxDiff = 0;
-
-  for (let i = 0; i < totalPixels; i++) {
-    const offset = i * 4;
-    const dr = baseline[offset] - current[offset];
-    const dg = baseline[offset + 1] - current[offset + 1];
-    const db = baseline[offset + 2] - current[offset + 2];
-    const dist = Math.sqrt(dr * dr + dg * dg + db * db);
-
-    if (dist > tolerance) {
-      diffPixels++;
-      maxDiff = Math.max(maxDiff, dist);
-    }
-  }
-
-  return {
-    totalPixels,
-    diffPixels,
-    diffPercent: Math.round((diffPixels / totalPixels) * 10000) / 100,
-    maxDiff: Math.round(maxDiff * 100) / 100,
-  };
-}
 
 // ─── Step runners ───────────────────────────────────────────────────────────
 
@@ -231,7 +191,7 @@ async function runStep(
             h: number;
           };
           const tolerance = (params.tolerance as number) ?? 30;
-          const result = comparePixels(
+          const result = comparePixelBuffers(
             Buffer.from(baseData),
             Buffer.from(curData),
             w,

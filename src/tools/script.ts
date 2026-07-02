@@ -7,6 +7,7 @@
 import {zod} from '../third_party/index.js';
 import type {Frame, JSHandle, Page, WebWorker} from '../third_party/index.js';
 import type {ExtensionServiceWorker} from '../types.js';
+import {appendJsonBlock} from '../utils/format.js';
 
 import {ToolCategory} from './categories.js';
 import type {Context, Response} from './ToolDefinition.js';
@@ -170,9 +171,7 @@ const performEvaluation = async (
       );
     } else {
       response.appendResponseLine('Script ran on page and returned:');
-      response.appendResponseLine('```json');
-      response.appendResponseLine(`${result}`);
-      response.appendResponseLine('```');
+      appendJsonBlock(response, `${result}`);
     }
   } finally {
     void fn.dispose();

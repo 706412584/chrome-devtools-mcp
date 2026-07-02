@@ -10,172 +10,10 @@
 import fs from 'node:fs/promises';
 
 import {zod} from '../third_party/index.js';
+import {comparePixelBuffersExtended} from '../utils/pixel-comparison.js';
 
 import {ToolCategory} from './categories.js';
 import {definePageTool} from './ToolDefinition.js';
-
-/**
- * Compare two RGBA pixel buffers pixel-by-pixel in Node.js.
- * Returns diff stats and an optional diff image buffer.
- */
-function comparePixels(
-  baseline: Buffer,
-  current: Buffer,
-  width: number,
-  height: number,
-  tolerance: number,
-  alphaTolerance: number,
-): {
-  totalPixels: number;
-  diffPixels: number;
-  diffPercent: number;
-  maxDiff: number;
-  diffImage: Buffer;
-  diffRegions: Array<{
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-    severity: string;
-  }>;
-} {
-  const totalPixels = width * height;
-  const diffImage = Buffer.alloc(width * height * 4);
-  let diffPixels = 0;
-  let maxDiff = 0;
-
-  // Track bounding box of diff regions
-  const diffMask = new Uint8Array(totalPixels);
-
-  for (let i = 0; i < totalPixels; i++) {
-    const offset = i * 4;
-    const r1 = baseline[offset];
-    const g1 = baseline[offset + 1];
-    const b1 = baseline[offset + 2];
-    const a1 = baseline[offset + 3];
-
-    const r2 = current[offset];
-    const g2 = current[offset + 1];
-    const b2 = current[offset + 2];
-    const a2 = current[offset + 3];
-
-    // Color distance (Euclidean in RGBA space)
-    const dr = r1 - r2;
-    const dg = g1 - g2;
-    const db = b1 - b2;
-    const da = a1 - a2;
-    const colorDist = Math.sqrt(dr * dr + dg * dg + db * db);
-    const alphaDist = Math.abs(da);
-
-    if (colorDist > tolerance || alphaDist > alphaTolerance) {
-      diffPixels++;
-      diffMask[i] = 1;
-      maxDiff = Math.max(maxDiff, colorDist);
-
-      // Red channel for diff pixels, intensity proportional to difference
-      const intensity = Math.min(255, Math.round(colorDist * 3));
-      diffImage[offset] = 255; // R
-      diffImage[offset + 1] = 0; // G
-      diffImage[offset + 2] = 0; // B
-      diffImage[offset + 3] = Math.min(255, intensity + 100); // A
-    } else {
-      // Gray out matching pixels
-      const gray = Math.round(((r1 + g1 + b1) / 3) * 0.3);
-      diffImage[offset] = gray;
-      diffImage[offset + 1] = gray;
-      diffImage[offset + 2] = gray;
-      diffImage[offset + 3] = 80;
-    }
-  }
-
-  // Find connected diff regions (simple bounding box approach)
-  const diffRegions = findDiffRegions(diffMask, width, height);
-
-  return {
-    totalPixels,
-    diffPixels,
-    diffPercent: Math.round((diffPixels / totalPixels) * 10000) / 100,
-    maxDiff: Math.round(maxDiff * 100) / 100,
-    diffImage,
-    diffRegions,
-  };
-}
-
-/**
- * Find bounding boxes of diff regions using simple flood-fill-like scan.
- */
-function findDiffRegions(
-  mask: Uint8Array,
-  width: number,
-  height: number,
-): Array<{x: number; y: number; w: number; h: number; severity: string}> {
-  const visited = new Uint8Array(mask.length);
-  const regions: Array<{
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-    severity: string;
-  }> = [];
-
-  // Simple scanline approach: find bounding boxes of connected diff regions
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const idx = y * width + x;
-      if (mask[idx] && !visited[idx]) {
-        // BFS to find connected component
-        const queue = [idx];
-        visited[idx] = 1;
-        let minX = x,
-          maxX = x,
-          minY = y,
-          maxY = y;
-
-        while (queue.length > 0) {
-          const cur = queue.shift()!;
-          const cx = cur % width;
-          const cy = Math.floor(cur / width);
-          minX = Math.min(minX, cx);
-          maxX = Math.max(maxX, cx);
-          minY = Math.min(minY, cy);
-          maxY = Math.max(maxY, cy);
-
-          // 4-connected neighbors
-          for (const [dx, dy] of [
-            [-1, 0],
-            [1, 0],
-            [0, -1],
-            [0, 1],
-          ]) {
-            const nx = cx + dx;
-            const ny = cy + dy;
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-              const ni = ny * width + nx;
-              if (mask[ni] && !visited[ni]) {
-                visited[ni] = 1;
-                queue.push(ni);
-              }
-            }
-          }
-        }
-
-        const regionW = maxX - minX + 1;
-        const regionH = maxY - minY + 1;
-        const area = regionW * regionH;
-        let severity = 'minor';
-        if (area > 10000) {
-          severity = 'major';
-        } else if (area > 1000) {
-          severity = 'moderate';
-        }
-
-        regions.push({x: minX, y: minY, w: regionW, h: regionH, severity});
-      }
-    }
-  }
-
-  return regions;
-}
 
 // ─── screenshot_diff ────────────────────────────────────────────────────────
 export const screenshotDiff = definePageTool({
@@ -333,7 +171,7 @@ export const screenshotDiff = definePageTool({
     const baselineBuf = Buffer.from(bArr);
     const currentBuf = Buffer.from(cArr);
 
-    const result = comparePixels(
+    const result = comparePixelBuffersExtended(
       baselineBuf,
       currentBuf,
       width,
