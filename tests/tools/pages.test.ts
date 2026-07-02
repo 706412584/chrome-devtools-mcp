@@ -1173,9 +1173,7 @@ describe('pages', () => {
         );
         assert.strictEqual(context.getSelectedMcpPage().getDialog(), undefined);
         assert.ok(
-          response.responseLines[0].includes(
-            'Dialog dismiss may have failed',
-          ),
+          response.responseLines[0].includes('Dialog dismiss may have failed'),
           `Expected failure message but got: ${response.responseLines[0]}`,
         );
       });
