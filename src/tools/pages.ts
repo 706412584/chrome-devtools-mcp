@@ -454,21 +454,27 @@ export const handleDialog = definePageTool({
       case 'accept': {
         try {
           await dialog.accept(request.params.promptText);
+          response.appendResponseLine('Successfully accepted the dialog');
         } catch (err) {
-          // Likely already handled by the user outside of MCP.
+          const msg = err instanceof Error ? err.message : String(err);
           logger?.(err);
+          response.appendResponseLine(
+            `Dialog accept may have failed (possibly already handled outside MCP): ${msg}`,
+          );
         }
-        response.appendResponseLine('Successfully accepted the dialog');
         break;
       }
       case 'dismiss': {
         try {
           await dialog.dismiss();
+          response.appendResponseLine('Successfully dismissed the dialog');
         } catch (err) {
-          // Likely already handled.
+          const msg = err instanceof Error ? err.message : String(err);
           logger?.(err);
+          response.appendResponseLine(
+            `Dialog dismiss may have failed (possibly already handled outside MCP): ${msg}`,
+          );
         }
-        response.appendResponseLine('Successfully dismissed the dialog');
         break;
       }
     }

@@ -353,7 +353,11 @@ class PageEventSubscriber {
         },
       );
     } catch (error) {
-      logger?.('Error creating a new issue', error);
+      const msg = error instanceof Error ? error.message : String(error);
+      logger?.(
+        `Error creating issue (code: ${inspectorIssue.code}): ${msg}`,
+        error,
+      );
     }
   };
 }

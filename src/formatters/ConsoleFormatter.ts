@@ -9,6 +9,7 @@ import {
   type TargetUniverse,
   SymbolizedError,
 } from '../devtools/DevtoolsUtils.js';
+import {logger} from '../logger.js';
 import {UncaughtError} from '../PageCollector.js';
 import * as DevTools from '../third_party/index.js';
 import type {ConsoleMessage} from '../third_party/index.js';
@@ -157,8 +158,11 @@ export class ConsoleFormatter {
     } else if (options.fetchDetailedData && options.devTools) {
       try {
         stack = await createStackTraceForConsoleMessage(options.devTools, msg);
-      } catch {
-        // ignore
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        logger?.(
+          `Failed to resolve stack trace for console message: ${errMsg}`,
+        );
       }
     }
 

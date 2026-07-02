@@ -207,7 +207,11 @@ export class IssueFormatter {
         rawMarkdown,
         markdownDescription?.substitutions,
       );
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger?.(
+        `Error substituting placeholders for issue ${this.#issue.code()}: ${msg}`,
+      );
       return undefined;
     }
   }

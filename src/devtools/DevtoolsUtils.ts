@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import {logger} from '../logger.js';
 import {Mutex} from '../Mutex.js';
 import {DevTools} from '../third_party/index.js';
 import type {
@@ -325,8 +326,9 @@ export class SymbolizedError {
           opts.details.stackTrace,
           opts.targetId,
         );
-      } catch {
-        // ignore
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger?.(`Failed to create stack trace: ${msg}`);
       }
     }
 
@@ -349,8 +351,9 @@ export class SymbolizedError {
             targetId: opts.targetId,
           });
         }
-      } catch {
-        // Ignore
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        logger?.(`Failed to resolve error cause: ${msg}`);
       }
     }
     return new SymbolizedError(message, stackTrace, cause);

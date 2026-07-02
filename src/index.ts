@@ -69,7 +69,8 @@ export async function createMcpServer(
       );
       context?.setRoots(roots.roots);
     } catch (e) {
-      logger?.('Failed to list roots', e);
+      const msg = e instanceof Error ? e.message : String(e);
+      logger?.(`Failed to list roots (non-fatal): ${msg}`, e);
     }
   };
 
