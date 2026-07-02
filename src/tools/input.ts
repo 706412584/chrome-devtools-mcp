@@ -107,7 +107,7 @@ export const click = definePageTool({
       .number()
       .optional()
       .describe(
-        'Horizontal offset from the element\'s top-left corner in CSS pixels. ' +
+        "Horizontal offset from the element's top-left corner in CSS pixels. " +
           'When provided with offsetY, clicks at this position instead of center. ' +
           'Useful for clicking buttons inside canvas elements.',
       ),
@@ -115,7 +115,7 @@ export const click = definePageTool({
       .number()
       .optional()
       .describe(
-        'Vertical offset from the element\'s top-left corner in CSS pixels. ' +
+        "Vertical offset from the element's top-left corner in CSS pixels. " +
           'When provided with offsetX, clicks at this position instead of center. ' +
           'Useful for clicking buttons inside canvas elements.',
       ),
@@ -179,9 +179,7 @@ export const click = definePageTool({
           }
         }
       });
-      const posStr = hasOffset
-        ? ` at offset (${offsetX}, ${offsetY})`
-        : '';
+      const posStr = hasOffset ? ` at offset (${offsetX}, ${offsetY})` : '';
       response.appendResponseLine(
         request.params.dblClick
           ? `Successfully double clicked on the element${posStr}`
