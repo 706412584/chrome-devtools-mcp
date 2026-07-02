@@ -346,9 +346,10 @@ export const browserConnect = defineTool({
           {
             mcpServers: {
               'chrome-devtools': {
-                command: 'node',
+                command: 'npx',
                 args: [
-                  'D:\\Marker\\chrome-devtools-mcp\\build\\src\\bin\\chrome-devtools-mcp.js',
+                  '-y',
+                  'chrome-devtools-mcp-game@latest',
                   '--wsEndpoint',
                   wsEndpoint,
                 ],
@@ -363,15 +364,11 @@ export const browserConnect = defineTool({
     }
 
     if (userDataDir) {
-      const args = [
-        'D:\\Marker\\chrome-devtools-mcp\\build\\src\\bin\\chrome-devtools-mcp.js',
-        '--userDataDir',
-        userDataDir,
-      ];
+      const mcpArgs = ['--userDataDir', userDataDir];
       if (profile && profile !== 'Default') {
-        args.push('--profile', profile);
+        mcpArgs.push('--profile', profile);
       }
-      args.push('--experimentalVision');
+      mcpArgs.push('--experimentalVision');
 
       response.appendResponseLine(
         'Option B — Persistent userDataDir (survives restarts):',
@@ -382,8 +379,8 @@ export const browserConnect = defineTool({
           {
             mcpServers: {
               'chrome-devtools': {
-                command: 'node',
-                args,
+                command: 'npx',
+                args: ['-y', 'chrome-devtools-mcp-game@latest', ...mcpArgs],
               },
             },
           },
