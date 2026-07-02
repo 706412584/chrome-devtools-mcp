@@ -529,12 +529,12 @@ so returned values have to be JSON-serializable.
 **Parameters:**
 
 - **function** (string) **(required)**: A JavaScript function declaration to be executed by the tool in the currently selected page.
-Example without arguments: `() => {
+  Example without arguments: `() => {
   return document.title
 }` or `async () => {
   return await fetch("example.com")
 }`.
-Example with arguments: `(el) => {
+  Example with arguments: `(el) => {
   return el.innerText;
 }`
 
@@ -550,7 +550,7 @@ Example with arguments: `(el) => {
 
 **Parameters:**
 
-- **function** (string) _(optional)_: Custom JavaScript function to evaluate. Must return a JSON-serializable value. Example: "() => window.__gameState"
+- **function** (string) _(optional)_: Custom JavaScript function to evaluate. Must return a JSON-serializable value. Example: "() => window.\_\_gameState"
 - **preset** (enum: "screen", "dom", "console", "performance") _(optional)_: Built-in query preset. If provided, "function" is ignored.
 - **pretty** (boolean) _(optional)_: Pretty-print the JSON output. Default true.
 
@@ -842,12 +842,12 @@ in the DevTools Elements panel (if any).
 ### `list_3p_developer_tools`
 
 **Description:** Lists all third-party developer tools the page exposes for providing runtime information.
-  Third-party developer tools can be called via the '[`execute_3p_developer_tool`](#execute_3p_developer_tool)()' MCP tool.
-  Alternatively, third-party developer tools can be executed by calling '[`evaluate_script`](#evaluate_script)' and adding the
-  following command to the script:
-  'window.__dtmcp.executeTool(toolName, params)'
-  This might be helpful when the third-party developer tools return non-serializable values or when composing
-  third-party developer tools with additional functionality. (requires flag: --categoryExperimentalThirdParty=true)
+Third-party developer tools can be called via the '[`execute_3p_developer_tool`](#execute_3p_developer_tool)()' MCP tool.
+Alternatively, third-party developer tools can be executed by calling '[`evaluate_script`](#evaluate_script)' and adding the
+following command to the script:
+'window.\_\_dtmcp.executeTool(toolName, params)'
+This might be helpful when the third-party developer tools return non-serializable values or when composing
+third-party developer tools with additional functionality. (requires flag: --categoryExperimentalThirdParty=true)
 
 **Parameters:** None
 
