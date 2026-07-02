@@ -30,19 +30,24 @@ describe('slim', () => {
     });
   });
 
-  it('handles errors', async t => {
+  it('handles errors', async () => {
     await withMcpContext(async (response, context) => {
-      await evaluate.handler(
+      await assert.rejects(
+        () =>
+          evaluate.handler(
+            {
+              params: {
+                script: `throw new Error('test error')`,
+              },
+              page: context.getSelectedMcpPage(),
+            },
+            response,
+            context,
+          ),
         {
-          params: {
-            script: `throw new Error('test error')`,
-          },
-          page: context.getSelectedMcpPage(),
+          message: 'Script evaluation failed: test error',
         },
-        response,
-        context,
       );
-      t.assert.snapshot(response.responseLines.join('\n'));
     });
   });
 
