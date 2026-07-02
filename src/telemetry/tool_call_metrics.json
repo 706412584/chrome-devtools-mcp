@@ -9,6 +9,14 @@
       {
         "name": "include_snapshot",
         "argType": "boolean"
+      },
+      {
+        "name": "offset_x",
+        "argType": "number"
+      },
+      {
+        "name": "offset_y",
+        "argType": "number"
       }
     ]
   },

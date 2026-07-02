@@ -95,7 +95,8 @@ export const commands: Commands = {
     args: {},
   },
   click: {
-    description: 'Clicks on the provided element',
+    description:
+      "Clicks on the provided element. For cross-origin iframes (e.g., game canvases), automatically falls back to CDP Input.dispatchMouseEvent which penetrates iframe boundaries. Use offsetX/offsetY to click at a specific position within the element (e.g., a button inside a canvas). Coordinates are relative to the element's top-left corner.",
     category: 'Input automation',
     args: {
       uid: {
@@ -104,6 +105,20 @@ export const commands: Commands = {
         description:
           'The uid of an element on the page from the page content snapshot',
         required: true,
+      },
+      offsetX: {
+        name: 'offsetX',
+        type: 'number',
+        description:
+          "Horizontal offset from the element's top-left corner in CSS pixels. When provided with offsetY, clicks at this position instead of center. Useful for clicking buttons inside canvas elements.",
+        required: false,
+      },
+      offsetY: {
+        name: 'offsetY',
+        type: 'number',
+        description:
+          "Vertical offset from the element's top-left corner in CSS pixels. When provided with offsetX, clicks at this position instead of center. Useful for clicking buttons inside canvas elements.",
+        required: false,
       },
       dblClick: {
         name: 'dblClick',
